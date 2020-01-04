@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
     14:55:35.339 <default> DEBUG: [..\TB12Ctrl\main.cpp 58] "Fusion"
 #endif
 
-    //QApplication::setStyle(QStyleFactory::create("Windows"));
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     QApplication a(argc, argv);
 
@@ -92,6 +92,9 @@ int main(int argc, char *argv[]){
         w.show();
         retcode = a.exec();
     }
+
+    QString err;
+    SSXMSGS::save("TB12Ctrl.json", err );
 
     g_logFile.close();
     return retcode;

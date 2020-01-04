@@ -326,6 +326,18 @@ QVector<midiMsg_t> encodeBank(int number);
 /// \return if decoded 0x00 - GLOBALS_MSG, 0x01 - BANKS_MSG, 0x02 - ACK_MSG, 0x03 - EOT_MSG, else 0xFF - UNKNOWN_MSG
 uint8_t decode( const midiMsg_t & midiMsg );
 
+/// save settings to file
+/// \param fileName[in] - file name
+/// \param error[in,out]- error text
+/// \return true - if success, else - false
+bool save( QString fileName, QString & error );
+
+/// read settings from file
+/// \param fileName[in] - file name
+/// \param error[in,out]- error text
+/// \return true - if success
+bool load(QString fileName , QString &error);
+
 } //SSXMSGS
 
 

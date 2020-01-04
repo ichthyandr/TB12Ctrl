@@ -18,6 +18,9 @@
 #include <QStackedLayout>
 #include <QLayout>
 
+#include <QMenuBar>
+#include <QMenu>
+
 Q_LOGGING_CATEGORY( DLG, "DLG")
 
 // object names
@@ -37,6 +40,18 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
 
     auto mainLayout = new QVBoxLayout;
     setLayout(mainLayout);
+
+    ///
+    ///
+    QMenuBar* menuBar = new QMenuBar();
+    QMenu *fileMenu = new QMenu("File");
+    menuBar->addMenu(fileMenu);
+    fileMenu->addAction("Load");
+    fileMenu->addAction("Save");
+    fileMenu->addAction("Exit");
+
+    this->layout()->setMenuBar(menuBar);
+    ///
 
     auto sl = new QStackedLayout();
     mainLayout->addLayout(sl);
