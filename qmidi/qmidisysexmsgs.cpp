@@ -1462,6 +1462,57 @@ bool load( QString fileName, QString & error ){
                             static_cast<uint16_t>(presetChangeContextObj.value("iaState").toInt());
 
                 }
+                //commonContext
+                if (btnCntxObj.value("commonContext").isUndefined())  throw (QObject::tr("buttonContex elem no 'commonContext' key"));
+                if (!btnCntxObj.value("commonContext").isObject())    throw (QObject::tr("'commonContext' buttonContex elem isnt Object"));
+                QJsonObject commonContextObj = btnCntxObj.value("commonContext").toObject();
+                //contolAndNrpnChangeContext
+                if (commonContextObj.value("contolAndNrpnChangeContext").isUndefined()) throw (QObject::tr("no 'contolAndNrpnChangeContext' key"));
+                if (!commonContextObj.value("contolAndNrpnChangeContext").isObject())   throw (QObject::tr("'contolAndNrpnChangeContext' isnt Object"));
+                QJsonObject contolAndNrpnChangeContextObj = commonContextObj.value("contolAndNrpnChangeContext").toObject();
+                {
+                    //autoSendState
+                    if (contolAndNrpnChangeContextObj.value("autoSendState").isUndefined())
+                        throw (QObject::tr("no 'autoSendState' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.autoSendState =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("autoSendState").toInt());
+
+                    //ctrlLsbNumber
+                    if (contolAndNrpnChangeContextObj.value("ctrlLsbNumber").isUndefined())
+                        throw (QObject::tr("no 'ctrlLsbNumber' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.ctrlLsbNumber =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("ctrlLsbNumber").toInt());
+
+                    //ctrlMsbFreezeNumber
+                    if (contolAndNrpnChangeContextObj.value("ctrlMsbFreezeNumber").isUndefined())
+                        throw (QObject::tr("no 'ctrlMsbFreezeNumber' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.ctrlMsbFreezeNumber =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("ctrlMsbFreezeNumber").toInt());
+
+                    //paramLsbOffValue
+                    if (contolAndNrpnChangeContextObj.value("paramLsbOffValue").isUndefined())
+                        throw (QObject::tr("no 'paramLsbOffValue' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramLsbOffValue =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramLsbOffValue").toInt());
+
+                    //paramLsbOnValue
+                    if (contolAndNrpnChangeContextObj.value("paramLsbOnValue").isUndefined())
+                        throw (QObject::tr("no 'paramLsbOnValue' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramLsbOnValue =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramLsbOnValue").toInt());
+
+                    //paramMsbOffValue
+                    if (contolAndNrpnChangeContextObj.value("paramMsbOffValue").isUndefined())
+                        throw (QObject::tr("no 'paramMsbOffValue' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramMsbOffValue =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramMsbOffValue").toInt());
+
+                    //paramMsbOnValue
+                    if (contolAndNrpnChangeContextObj.value("paramMsbOnValue").isUndefined())
+                        throw (QObject::tr("no 'paramMsbOnValue' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramMsbOnValue =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramMsbOnValue").toInt());
+                }
             }
 
             ////// if all ok, add it to g_BanksSettings
