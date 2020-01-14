@@ -22,6 +22,16 @@ public:
     ~QHomeWidget();
     /// get instance
     static QHomeWidget * getInstance();
+    /// загрузить файл данных
+    /// \param fileName[in] - file name
+    /// \param err[out] - error string
+    /// \return true - if success
+    bool loadFile( QString fileName, QString & err );
+    /// сохранить файл данных
+    /// \param fileName[in] - file name
+    /// \param err[out] - error string
+    /// \return true - if success
+    bool saveFile( QString fileName, QString & err );
 private:
     /// набор команд:
     /// -1      изменены Globals settings

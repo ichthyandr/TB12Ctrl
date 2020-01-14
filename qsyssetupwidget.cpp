@@ -9,8 +9,13 @@
 #include "qmidi/qmidisysexmsgs.h"
 Q_LOGGING_CATEGORY( SYS,"SYS")
 
+static QSysSetupWidget * g_ssw{Q_NULLPTR};
+
 QSysSetupWidget::QSysSetupWidget(QWidget *parent) : QWidget(parent){
     qCDebug(SYS) << Q_FUNC_INFO;
+
+    g_ssw = this;
+
     auto mainLayout = new QVBoxLayout();
     setLayout( mainLayout );
 
@@ -248,6 +253,10 @@ QSysSetupWidget::QSysSetupWidget(QWidget *parent) : QWidget(parent){
 
 QSysSetupWidget::~QSysSetupWidget(){
     qCDebug(SYS) << Q_FUNC_INFO;
+}
+
+QSysSetupWidget * QSysSetupWidget::getInstance(){
+    return (g_ssw);
 }
 
 void QSysSetupWidget::updateData(){

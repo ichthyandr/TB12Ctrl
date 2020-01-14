@@ -17,6 +17,8 @@
 #include <QComboBox>
 #include <QStackedLayout>
 #include <QLayout>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include <QMenuBar>
 #include <QMenu>
@@ -26,6 +28,7 @@ Q_LOGGING_CATEGORY( DLG, "DLG")
 // object names
 static const QString _sl            = QString("DlgStackedLayout");
 static const QString _btnSetups     = QString("DlgQBtnSetupWidget");
+static const QString _saveAct       = QString("SaveAct");
 
 static Dialog * g_dialog{Q_NULLPTR};
 
@@ -46,11 +49,16 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
     QMenuBar* menuBar = new QMenuBar();
     QMenu *fileMenu = new QMenu("File");
     menuBar->addMenu(fileMenu);
-    fileMenu->addAction("Load");
-    fileMenu->addAction("Save");
-    fileMenu->addAction("Exit");
+    m_loadAct = fileMenu->addAction(QIcon(":/images/open_16.png"),tr("Load"));
+    m_saveAct = fileMenu->addAction(QIcon(":/images/save_16.png"),tr("Save"));
+    fileMenu->addSeparator();
+    auto exitAct = fileMenu->addAction(QIcon(":/images/exit_16.png"),tr("Exit"));
+
+    m_saveAct->setDisabled( true );
+    m_loadAct->setEnabled( true );
 
     this->layout()->setMenuBar(menuBar);
+
     ///
 
     auto sl = new QStackedLayout();
@@ -70,6 +78,30 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
 
     connect( QButtonsWidget::getInstance(), &QButtonsWidget::s_clickedBtn, this , &Dialog::_clickedBtn );
     connect( btnSetups, &QBtnSetupWidget::s_back, this, &Dialog::_back );
+
+    connect( m_loadAct, &QAction::triggered, [=](){
+        QString fileName = QFileDialog::getOpenFileName(this, tr("Open data"), ".", "*.json");
+        if ( !fileName.isEmpty()){
+            QString err;
+            if (!home->loadFile( fileName, err )){
+                QMessageBox::critical(this, "Load error", err);
+            }
+        }
+    });
+
+    connect( m_saveAct, &QAction::triggered, [=](){
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Save data"), ".", "*.json");
+        if ( !fileName.isEmpty() ){
+            QString err;
+            if (!home->saveFile( fileName, err )){
+                QMessageBox::critical(this, "Save error", err);
+            }
+        }
+    });
+
+    connect( exitAct, &QAction::triggered, [=](){
+        close();
+    });
 }
 
 Dialog * Dialog::getInstance(){
@@ -112,6 +144,15 @@ void Dialog::_back(){
     sl->setCurrentIndex(0);
 }
 
+void Dialog::enableSave( bool enable ){
+    qCDebug(DLG) << Q_FUNC_INFO;
+    if ( Q_NULLPTR != m_saveAct ) m_saveAct->setEnabled( enable );
+}
+
+void Dialog::enableLoad( bool enable ){
+    qCDebug(DLG) << Q_FUNC_INFO;
+    if ( Q_NULLPTR != m_loadAct ) m_loadAct->setEnabled( enable );
+}
 
 Dialog::~Dialog(){
     qCDebug(DLG) << Q_FUNC_INFO;

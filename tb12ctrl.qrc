@@ -2,5 +2,8 @@
     <qresource prefix="/">
         <file>images/off_16.png</file>
         <file>images/on_16.png</file>
+        <file>images/open_16.png</file>
+        <file>images/save_16.png</file>
+        <file>images/exit_16.png</file>
     </qresource>
 </RCC>

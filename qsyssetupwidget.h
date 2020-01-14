@@ -17,6 +17,8 @@ public:
     ~QSysSetupWidget();
     /// обновить поля при загрузке данных
     void updateData();
+    /// get instance
+    static QSysSetupWidget * getInstance();
 private:
     /// защелка
     bool m_proceed{false};

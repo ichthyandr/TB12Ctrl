@@ -93,10 +93,6 @@ int main(int argc, char *argv[]){
         retcode = a.exec();
     }
 
-    QString err;
-    SSXMSGS::save("TB12Ctrl.json", err );
-
     g_logFile.close();
     return retcode;
-
 }

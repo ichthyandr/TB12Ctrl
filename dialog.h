@@ -17,6 +17,12 @@ public:
     /// установить текущий номер банка для редактирования
     ///\param bankNumber[in] - номер банка
     void setCurrentBankNumber( int bankNumber );
+    /// enable disable "save" menu
+    /// \param enable - true for enable
+    void enableSave( bool enable );
+    /// enable disable "load" menu
+    /// \param enable - true for enable
+    void enableLoad( bool enable );
 public slots:
     /// слот приема сигнала нажатия кнопки
     /// \param btnNumber[in] - номер кнопки 1..12
@@ -26,6 +32,10 @@ public slots:
 private:
     /// текущий номер банка
     int m_currentBankNumber{0};
+    /// save action
+    QAction * m_saveAct{Q_NULLPTR};
+    /// load action
+    QAction * m_loadAct{Q_NULLPTR};
 };
 
 #endif // DIALOG_H

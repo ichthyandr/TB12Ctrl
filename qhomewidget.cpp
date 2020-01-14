@@ -249,6 +249,9 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
             outPortCmb->setDisabled(true);
             sendBtn->setDisabled(true);
             onBtn->setDisabled(true);
+
+            Dialog::getInstance()->enableLoad( false );
+            Dialog::getInstance()->enableSave( false );
         }
     });
     connect(&m_qmidiin,     &QIN::Controller::s_ack, [=](){
@@ -277,6 +280,8 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
             txLabel->setPixmap(m_txIndicator.off());
 
             sysSetupWidget->updateData();
+            Dialog::getInstance()->enableLoad( true );
+            Dialog::getInstance()->enableSave( true );
         }
     });
     connect(&m_qmidiout,    &QOUT::Controller::s_sent,[=](){
@@ -292,6 +297,9 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
             outPortCmb->setDisabled(true);
             sendBtn->setDisabled(true);
             onBtn->setDisabled(true);
+
+            Dialog::getInstance()->enableLoad( false );
+            Dialog::getInstance()->enableSave( false );
         }
     });
     connect(&m_qmidiout,    &QOUT::Controller::s_end,[=](){
@@ -309,6 +317,9 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
 
             rxLabel->setPixmap(m_rxIndicator.off());
             txLabel->setPixmap(m_txIndicator.off());
+
+            Dialog::getInstance()->enableLoad( true );
+            Dialog::getInstance()->enableSave( true );
         }
     });
 
@@ -395,3 +406,106 @@ QHomeWidget::~QHomeWidget(){
 QHomeWidget * QHomeWidget::getInstance(){
     return(g_hw);
 }
+
+///QString err;
+///SSXMSGS::load("TB12Ctrl.json", err );
+
+bool QHomeWidget::loadFile( QString fileName, QString & err ){
+    qCDebug(HOM) << Q_FUNC_INFO << "fileName=" << fileName;
+
+    auto bankCombo = findChild<QComboBox*>(_bankCombo);
+    if ( Q_NULLPTR == bankCombo ){
+        err = "can't find combo";
+        qCCritical(HOM) << Q_FUNC_INFO << err;
+        return( false );
+    }
+    auto tabWidget = findChild<QTabWidget*>(_tabWidget);
+    if ( Q_NULLPTR == tabWidget ){
+        err = "can't find tabwidget";
+        qCCritical(HOM) << Q_FUNC_INFO << err;
+        return( false );
+    }
+    auto sendBankBtn = findChild<QPushButton*>(_sendBankBtn);
+    if ( Q_NULLPTR == sendBankBtn ){
+        err = "can't find send bank button";
+        qCCritical(HOM) << Q_FUNC_INFO << err;
+        return( false );
+    }
+    auto inPortCmb  = findChild<QComboBox*>(_inPortCmb);
+    if ( Q_NULLPTR == inPortCmb ){
+        err = "can't find in port combo";
+        qCCritical(HOM) << Q_FUNC_INFO << err;
+        return( false );
+    }
+    auto outPortCmb = findChild<QComboBox*>(_outPortCmb);
+    if ( Q_NULLPTR == outPortCmb ){
+        err = "can't find out port combo";
+        qCCritical(HOM) << Q_FUNC_INFO << err;
+        return( false );
+    }
+    auto onBtn = findChild<QPushButton*>(_onBtn);
+    if ( Q_NULLPTR == onBtn ){
+        err = "can't find on button";
+        qCCritical(HOM) << Q_FUNC_INFO << err;
+        return( false );
+    }
+    auto sendBtn = findChild<QPushButton*>(_sendBtn);
+    if ( Q_NULLPTR == sendBtn ){
+        err = "can't find send button";
+        qCCritical(HOM) << Q_FUNC_INFO << err;
+        return( false );
+    }
+
+
+    bool res = SSXMSGS::load( fileName, err );
+
+    if ( res ){
+
+        m_cmdSet << -1;
+        int numBank = 0;
+        for( auto bank: SSXMSGS::g_BanksSettings ){
+            m_cmdSet << numBank;
+            numBank++;
+        }
+
+        _loadNames();
+        m_dataLoaded    = true;
+
+        bankCombo->setEnabled(true);
+        tabWidget->setEnabled(true);
+        sendBankBtn->setEnabled(m_Connected);
+        inPortCmb->setDisabled(m_Connected);
+        outPortCmb->setDisabled(m_Connected);
+        if ( !onBtn->isEnabled() ) onBtn->setEnabled(true);
+        sendBtn->setEnabled(m_Connected);
+
+        QSysSetupWidget::getInstance()->updateData();
+        updTitle();
+
+        Dialog::getInstance()->enableSave( true );
+    }
+    else {
+        m_cmdSet.clear();
+        SSXMSGS::init();
+        _loadNames();
+
+        bankCombo->setDisabled(true);
+        tabWidget->setDisabled(true);
+        sendBankBtn->setEnabled(m_Connected);
+        inPortCmb->setDisabled(m_Connected);
+        outPortCmb->setDisabled(m_Connected);
+        if ( !onBtn->isEnabled() ) onBtn->setEnabled(true);
+        sendBtn->setEnabled(m_Connected);
+
+        Dialog::getInstance()->enableSave( false );
+    }
+
+    return (res);
+}
+
+bool QHomeWidget::saveFile( QString fileName, QString & err ){
+    qCDebug(HOM) << Q_FUNC_INFO << "fileName=" << fileName;
+    bool res = SSXMSGS::save( fileName, err );
+    return( res );
+}
+
