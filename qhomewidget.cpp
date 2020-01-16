@@ -96,6 +96,8 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
                 updTitle();
             }
 
+            btnsWidget->update(index);
+
             qCDebug(HOM) << Q_FUNC_INFO << "index=" << index << "text=" << text << "set=" << m_cmdSet;
             ::memset( SSXMSGS::g_BanksSettings[index].BankName, 0, BANK_NAME_NMAX_SIZE);
             ::memcpy_s( SSXMSGS::g_BanksSettings[index].BankName, BANK_NAME_NMAX_SIZE, text.toStdString().c_str(), text.toStdString().length());
@@ -391,6 +393,8 @@ void QHomeWidget::_loadNames(){
         }
         bankCombo->addItems( bankNames );
         bankCombo->setCurrentIndex(0);
+        /// update buttons;
+        QButtonsWidget::getInstance()->update(0);
     }
     else {
         qCCritical(HOM) << Q_FUNC_INFO << "can't find combo!";

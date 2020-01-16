@@ -8,6 +8,7 @@
 
 #include "qhomewidget.h"
 #include "qbtnsetupwidget.h"
+#include "qbuttonswidget.h"
 
 #include "qpresetchangewidget.h"
 #include "qcctwidget.h"
@@ -153,9 +154,16 @@ QBtnSetupWidget::QBtnSetupWidget(QWidget *parent) : QWidget(parent){
         else if (buttonType == SSXMSGS::ButtonType::BANK_TO){
             bank2->setButton( m_btnNumber, m_curBnkNumber);
         }
+
+        //QButtonsWidget::getInstance()->update( m_btnNumber, m_curBnkNumber );
+        QButtonsWidget::getInstance()->update( m_curBnkNumber );
+
     });
 
-    connect(backBtn, &QPushButton::clicked,[=](){emit s_back();});
+    connect(backBtn, &QPushButton::clicked,[=](){
+        QButtonsWidget::getInstance()->update( m_curBnkNumber );
+        emit s_back();
+    });
     connect(this, &QBtnSetupWidget::s_changed, QHomeWidget::getInstance(), &QHomeWidget::_changed);
 }
 

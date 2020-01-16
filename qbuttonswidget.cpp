@@ -57,6 +57,7 @@ QButtonsWidget::QButtonsWidget(QWidget *parent) : QWidget(parent){
     connect( pb11, &QTBbutton::clicked,[=](){emit s_clickedBtn(11);} );
     connect( pb12, &QTBbutton::clicked,[=](){emit s_clickedBtn(12);} );
 
+    m_pBtns << pb1 << pb2 << pb3 << pb4 << pb5 << pb6 << pb7 << pb8 << pb9 << pb10 << pb11 << pb12;
 }
 
 QButtonsWidget::~QButtonsWidget(){
@@ -65,4 +66,17 @@ QButtonsWidget::~QButtonsWidget(){
 
 QButtonsWidget * QButtonsWidget::getInstance(){
     return(g_bw);
+}
+
+void QButtonsWidget::update( int bank ){
+    for( auto p_btn: m_pBtns ){
+        p_btn->update( bank );
+    }
+}
+
+void QButtonsWidget::update( int button, int bank ){
+    if ( (button-1)< m_pBtns.size() )
+        m_pBtns.at(button)->update( bank );
+    else
+        qCDebug(BTN) << Q_FUNC_INFO << "bad button number!";
 }

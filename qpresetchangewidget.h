@@ -23,12 +23,15 @@ public:
     void setButton(int btnNumber, int curBnkNumber);
     /// get instance
     static QPresetChangeWidget * getInstance();
-private:
     /// вычисление preset number
-    /// \param number[in] - 0..3
-    int presetNumber(int number);
+    /// \param b_useBankSelect[in] - true or false
+    /// \param number[in] - message number 0..3
+    /// \param bank[in]     - bank number 0...
+    /// \param button[in]   - button number 1...max
+    static int presetNumber(bool b_useBankSelect, int number, int bank, int button);
+private:
     /// признак SSXMSGS::UseBankSelectMess::USE_BANK_SELECT
-    bool m_useBankSelect{false};
+    ///bool m_useBankSelect{false};
     /// номер кнопки (1..12)
     int m_btnNumber{1};
     /// текущий редактируемый банк (0..)

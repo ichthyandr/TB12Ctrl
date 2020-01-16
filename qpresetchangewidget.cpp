@@ -22,7 +22,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
 
     g_preset = this;
 
-    m_useBankSelect = ( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT);
+    //m_useBankSelect = ( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT);
     //m_useBankSelect = true;
 
     auto mainLayout = new QHBoxLayout();
@@ -82,6 +82,8 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
     connect( combx1, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
         qCDebug(PCW) << Q_FUNC_INFO << "index=" << index;
 
+        if ( index < 0 ) return;
+
         QVariant data = combx1->itemData(index);
         bool ok;
         int midiChannel = data.toInt(&ok);
@@ -97,7 +99,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             lbl11->setDisabled(notActive);
             le1->setDisabled(notActive);
 
-            int prNum = presetNumber(0);
+            int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),0,m_curBnkNumber,m_btnNumber);
             QString preset = (!notActive)?(QString("%1").arg(prNum)):(QString(""));
             le1->setText(preset);
 
@@ -106,9 +108,9 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             if (!notActive)
                 sb14->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[0] + 1);
 
-            lbl13->setDisabled( notActive || (!m_useBankSelect));
-            sb13->setDisabled( notActive || (!m_useBankSelect));
-            if (!(notActive || (!m_useBankSelect)))
+            lbl13->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            sb13->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            if (!(notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT))))
                 sb13->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[0]+1);
         }
     });
@@ -116,7 +118,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[0] = data-1;
-        int prNum = presetNumber(0);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),0,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le1->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -125,7 +127,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[0] = data-1;
-        int prNum = presetNumber(0);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),0,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le1->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -170,6 +172,8 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
     connect( combx2, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
         qCDebug(PCW) << Q_FUNC_INFO << "index=" << index;
 
+        if ( index < 0 ) return;
+
         QVariant data = combx2->itemData(index);
         bool ok;
         int midiChannel = data.toInt(&ok);
@@ -185,7 +189,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             lbl21->setDisabled(notActive);
             le2->setDisabled(notActive);
 
-            int prNum = presetNumber(1);
+            int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),1,m_curBnkNumber,m_btnNumber);
             QString preset = (!notActive)?(QString("%1").arg(prNum)):(QString(""));
             le2->setText(preset);
 
@@ -194,9 +198,9 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             if (!notActive)
                 sb24->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[1] + 1);
 
-            lbl23->setDisabled( notActive || (!m_useBankSelect));
-            sb23->setDisabled( notActive || (!m_useBankSelect));
-            if (!(notActive || (!m_useBankSelect)))
+            lbl23->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            sb23->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            if (!(notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT))))
                 sb23->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[1]+1);
         }
     });
@@ -204,7 +208,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[1] = data-1;
-        int prNum = presetNumber(1);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),1,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le2->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -213,7 +217,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[1] = data-1;
-        int prNum = presetNumber(1);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),1,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le2->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -260,6 +264,8 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
     connect( combx3, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
         qCDebug(PCW) << Q_FUNC_INFO << "index=" << index;
 
+        if (index<0) return;
+
         QVariant data = combx3->itemData(index);
         bool ok;
         int midiChannel = data.toInt(&ok);
@@ -275,7 +281,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             lbl31->setDisabled(notActive);
             le3->setDisabled(notActive);
 
-            int prNum = presetNumber(2);
+            int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),2,m_curBnkNumber,m_btnNumber);
             QString preset = (!notActive)?(QString("%1").arg(prNum)):(QString(""));
             le3->setText(preset);
 
@@ -284,9 +290,9 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             if (!notActive )
                 sb34->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[2] + 1);
 
-            lbl33->setDisabled( notActive || (!m_useBankSelect));
-            sb33->setDisabled( notActive || (!m_useBankSelect));
-            if (!(notActive || (!m_useBankSelect)))
+            lbl33->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            sb33->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            if (!(notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT))))
                 sb33->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[2]+1);
         }
     });
@@ -294,7 +300,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[2] = data-1;
-        int prNum = presetNumber(2);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),2,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le3->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -303,7 +309,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[2] = data-1;
-        int prNum = presetNumber(2);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),2,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le3->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -349,6 +355,8 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
     connect( combx4, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
         qCDebug(PCW) << Q_FUNC_INFO << "index=" << index;
 
+        if ( index<0 ) return;
+
         QVariant data = combx4->itemData(index);
         bool ok;
         int midiChannel = data.toInt(&ok);
@@ -364,7 +372,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             lbl41->setDisabled(notActive);
             le4->setDisabled(notActive);
 
-            int prNum = presetNumber(3);
+            int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),3,m_curBnkNumber,m_btnNumber);
             QString preset = (!notActive)?(QString("%1").arg(prNum)):(QString(""));
             le4->setText(preset);
 
@@ -373,9 +381,9 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
             if ( !notActive )
                 sb44->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[3] + 1);
 
-            lbl43->setDisabled( notActive || (!m_useBankSelect));
-            sb43->setDisabled( notActive || (!m_useBankSelect));
-            if (!(notActive || (!m_useBankSelect)))
+            lbl43->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            sb43->setDisabled( notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT)));
+            if (!(notActive || (!( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT))))
                 sb43->setValue(SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[3]+1);
         }
     });
@@ -383,7 +391,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[3] = data-1;
-        int prNum = presetNumber(3);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),3,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le4->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -392,7 +400,7 @@ QPresetChangeWidget::QPresetChangeWidget( QWidget *parent ) : QWidget( parent ){
         qCDebug(PCW) << Q_FUNC_INFO << "newValue=" << newValue;
         uint8_t data = static_cast<uint8_t>(newValue);
         SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[3] = data-1;
-        int prNum = presetNumber(3);
+        int prNum = presetNumber(( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT),3,m_curBnkNumber,m_btnNumber);
         QString preset = QString("%1").arg(prNum);
         le4->setText(preset);
         if (m_iaStateProceed) emit s_changed(m_curBnkNumber);
@@ -539,7 +547,7 @@ QPresetChangeWidget::~QPresetChangeWidget(){
     qCDebug(PCW) << Q_FUNC_INFO;
 }
 
-int QPresetChangeWidget::presetNumber(int number){
+int QPresetChangeWidget::presetNumber( bool b_useBankSelect, int number, int bank, int button){
 
     //qCDebug(PCW) << Q_FUNC_INFO << "number=" << number;
     //qCDebug(PCW) << Q_FUNC_INFO << "banksNumbers=" <<
@@ -548,20 +556,20 @@ int QPresetChangeWidget::presetNumber(int number){
     //                SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[number];
 
     if ( number >=0 && number <=3 ){
-        if ( m_useBankSelect &&
-             SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[number] > 7 )
-            SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[number] = 0;
+        if ( b_useBankSelect &&
+             SSXMSGS::g_BanksSettings.at(bank).buttonContext[button-1].presetChangeContext.banksNumbers[number] > 7 )
+            SSXMSGS::g_BanksSettings[bank].buttonContext[button-1].presetChangeContext.banksNumbers[number] = 0;
 
-        if ( SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[number] > 127 )
-            SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[number] = 0;
+        if ( SSXMSGS::g_BanksSettings.at(bank).buttonContext[button-1].presetChangeContext.programsNumbers[number] > 127 )
+            SSXMSGS::g_BanksSettings[bank].buttonContext[button-1].presetChangeContext.programsNumbers[number] = 0;
     }
 
     int res=0;
     if ( number >=0 && number <=3 ){
-        res = ( m_useBankSelect )? \
-        ((SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.banksNumbers[number]/* + 1*/) *128 + \
-          SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[number] + 1 ): \
-        ( SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.programsNumbers[number] + 1 );
+        res = ( b_useBankSelect )? \
+        ((SSXMSGS::g_BanksSettings.at(bank).buttonContext[button-1].presetChangeContext.banksNumbers[number]/* + 1*/) *128 + \
+          SSXMSGS::g_BanksSettings.at(bank).buttonContext[button-1].presetChangeContext.programsNumbers[number] + 1 ): \
+        ( SSXMSGS::g_BanksSettings.at(bank).buttonContext[button-1].presetChangeContext.programsNumbers[number] + 1 );
     }
     //qCDebug(PCW) << Q_FUNC_INFO << "res=" << res;
     return (res);
@@ -612,7 +620,7 @@ void QPresetChangeWidget::setButton(int btnNumber, int curBnkNumber){
 
     m_iaStateProceed = false;
 
-    m_useBankSelect = ( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT);
+    //m_useBankSelect = ( SSXMSGS::g_GlobalSettings.useBankSelectMess == SSXMSGS::UseBankSelectMess::USE_BANK_SELECT);
 
     for(int i=0; i<4; i++ ){
         int midiChannelNumber = SSXMSGS::g_BanksSettings.at(m_curBnkNumber).buttonContext[m_btnNumber-1].presetChangeContext.midiChannelNumbers[i];
