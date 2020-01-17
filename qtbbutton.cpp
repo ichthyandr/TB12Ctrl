@@ -140,13 +140,19 @@ QPixmap QTBbutton::getIcon( const int number, const int bank ){
     case SSXMSGS::ButtonType::CC_MOMENTARY:
     case SSXMSGS::ButtonType::CC_CONST_VAL:
         if (SSXMSGS::ButtonType::CC_TOGGLE==SSXMSGS::g_BanksSettings.at(bank).buttonType[number-1]){
+            uint8_t ctl = SSXMSGS::g_BanksSettings[bank].buttonContext[number-1].commonContext.contolAndNrpnChangeContext_.ctrlLsbNumber;
+            _param = QString("ctl# %1").arg( (ctl>127)?QString("off"):QString("%1").arg(ctl));
             Y+= fm.ascent();
-            _param = QString("ctl# %1");
             painter.drawText( X, Y, _param );
-            _param = QString("frz# %1");
+
+            uint8_t frz = SSXMSGS::g_BanksSettings[bank].buttonContext[number-1].commonContext.contolAndNrpnChangeContext_.ctrlMsbFreezeNumber;
+            _param = QString("frz# %1").arg( (frz>127)?QString("off"):QString("%1").arg(frz));
             painter.drawText( X+60, Y, _param );
+
             Y+= fm.ascent();
-            _param = QString("Send Value");
+            _param =
+            (SSXMSGS::g_BanksSettings[bank].buttonContext[number-1].commonContext.contolAndNrpnChangeContext_.autoSendState>0)?
+                        QString("Send Value"):QString("");
             painter.drawText( X, Y, _param );
         }
         else {
