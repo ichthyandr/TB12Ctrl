@@ -48,7 +48,8 @@ GlobalSettings::GlobalSettings(){
     bnkSwOnBoard        = NO_EXT_PEDAL;         //System Setup -> Bank sw. mode
     Show_pr_name        = PRESET_AND_BANK;      //System Setup -> Show pr. name
     targetDevice        = TARGET_DEVICE_AUTO;   //System Setup -> Target device
-    usbBaudrate         = MIDI_BAUD;            //System Setup -> USB baudrate
+    usbBaudrate         = CUSTOM_BAUD_57600;    //System Setup -> USB baudrate
+
     inputThrough[0]     = IN_TO_NONE;           //System Setup ->MIDI thru map
     inputThrough[1]     = IN_TO_NONE;
     maxBankNumber       = 0;                    //System Setup ->Max. bank.
@@ -314,6 +315,10 @@ BankSettings::BankSettings(){
     tapCc       = 30;
     tunerCc     = 31;
 
+    selectBankAction        = 0;
+    selectBankActionProgNum = 0;
+
+
     for (uint8_t i = 0; i < FOOT_BUTTONS_NUM; ++i)
     {
         buttonType[i] = PRESET_CHANGE;//All buttons will preset switchers
@@ -338,6 +343,8 @@ BankSettings::BankSettings(){
         buttonContext[i].commonContext.contolAndNrpnChangeContext_.paramMsbOffValue     = 0x00;
         buttonContext[i].commonContext.contolAndNrpnChangeContext_.paramLsbOnValue      = 127;
         buttonContext[i].commonContext.contolAndNrpnChangeContext_.paramMsbOnValue      = 127;
+
+        buttonContext[i].commonContext.contolAndNrpnChangeContext_.vendorBlockId        = VENDOR_BLOCK_ID_NONE;
     }
 }
 

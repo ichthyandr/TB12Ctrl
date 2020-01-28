@@ -232,6 +232,8 @@ typedef enum : uint8_t {
     BUTTON_TYPE_TOTAL_ELEMENTS
 } ButtonType;
 
+#define VENDOR_BLOCK_ID_NONE 255
+
 #pragma pack(push, 1)
 ///This is using for all CC and NRPN button types
 struct ContolAndNrpnChangeContext {
@@ -246,6 +248,8 @@ struct ContolAndNrpnChangeContext {
     ///CC val for CC message
     uint8_t                     paramLsbOffValue;
     uint8_t                     autoSendState;
+    ///custom number from vendor SysEx, attach to this button as IA
+    uint8_t                     vendorBlockId;
 };
 
 struct NoteOnConstContext {
@@ -292,13 +296,14 @@ struct BankSettings {
 
     char                        BankName[BANK_NAME_NMAX_SIZE];
 
+    uint8_t                     selectBankAction;
+    uint8_t                     selectBankActionProgNum;
     /// конструктор
     BankSettings();
     /// конструктор
     BankSettings(const BankSettings &other);
     /// деструктор
     ~BankSettings();
-
 };
 #pragma pack(pop)
 
