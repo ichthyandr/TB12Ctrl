@@ -23,6 +23,8 @@ public:
     /// \param button[in]   - button number 1...FOOT_BUTTONS_NUM;
     /// \param bank[in]     - bank number 0...;
     void update( int button, int bank );
+    /// mask buttons by global model controller settings
+    void maskBtns();
 signals:
     /// выдать сигнал, что кнопка с number нажата
     void s_clickedBtn(int number);

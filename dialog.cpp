@@ -22,6 +22,7 @@
 
 #include <QMenuBar>
 #include <QMenu>
+#include <QActionGroup>
 
 Q_LOGGING_CATEGORY( DLG, "DLG")
 
@@ -47,7 +48,7 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
     ///
     ///
     QMenuBar* menuBar = new QMenuBar();
-    QMenu *fileMenu = new QMenu("File");
+    QMenu *fileMenu = new QMenu(tr("File"));
     menuBar->addMenu(fileMenu);
     m_loadAct = fileMenu->addAction(QIcon(":/images/open_16.png"),tr("Load"));
     m_saveAct = fileMenu->addAction(QIcon(":/images/save_16.png"),tr("Save"));
@@ -56,6 +57,34 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
 
     m_saveAct->setDisabled( true );
     m_loadAct->setEnabled( true );
+
+    //Controller models
+    QMenu *ctlMenu  = new QMenu(tr("Controller models"));
+    m_ctlActMenu    = menuBar->addMenu(ctlMenu);
+
+    auto tb5Act     = ctlMenu->addAction(tr("TB_5 MKII"));
+    auto tb8Act     = ctlMenu->addAction(tr("TB_8 MKII"));
+    auto tb12Act    = ctlMenu->addAction(tr("TB_12 MKII"));
+    auto tbSep      = ctlMenu->addSeparator();
+    tbSep->setText(tr("With pedals"));
+    auto tb6pAct    = ctlMenu->addAction(tr("TB_6P MKII"));
+    auto tb11pAct   = ctlMenu->addAction(tr("TB_11P MKII"));
+
+    tb5Act->setCheckable(true);
+    tb8Act->setCheckable(true);
+    tb12Act->setCheckable(true);
+    tb6pAct->setCheckable(true);
+    tb11pAct->setCheckable(true);
+
+    auto ctlGroup = new QActionGroup(this);
+    ctlGroup->addAction(tb5Act);
+    ctlGroup->addAction(tb8Act);
+    ctlGroup->addAction(tb12Act);
+    ctlGroup->addAction(tb6pAct);
+    ctlGroup->addAction(tb11pAct);
+    tb12Act->setChecked(true);
+
+    m_modelsAct << tb5Act << tb8Act << tb12Act << tb6pAct << tb11pAct;
 
     this->layout()->setMenuBar(menuBar);
 
@@ -102,6 +131,49 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
     connect( exitAct, &QAction::triggered, [=](){
         close();
     });
+
+    ///--------------------- models actions ----------------------
+    connect( tb5Act,  &QAction::triggered, [=](){
+        SSXMSGS::g_Model = SSXMSGS::TB_5_MKII;
+        home->reset();
+    });
+    connect( tb8Act,  &QAction::triggered, [=](){
+        SSXMSGS::g_Model = SSXMSGS::TB_8_MKII;
+        home->reset();
+    });
+    connect( tb12Act, &QAction::triggered, [=](){
+        SSXMSGS::g_Model = SSXMSGS::TB_12_MKII;
+        home->reset();
+    });
+    connect( tb6pAct, &QAction::triggered, [=](){
+        SSXMSGS::g_Model = SSXMSGS::TB_6P_MKII;
+        home->reset();
+    });
+    connect( tb11pAct,&QAction::triggered, [=](){
+        SSXMSGS::g_Model = SSXMSGS::TB_11P_MKII;
+        home->reset();
+    });
+}
+
+void Dialog::refreshModel(){
+    qCDebug(DLG) << Q_FUNC_INFO << "SSXMSGS::g_Model=" << SSXMSGS::g_Model;
+    switch (SSXMSGS::g_Model){
+    case SSXMSGS::TB_5_MKII:
+        m_modelsAct.at(0)->setChecked(true);
+        break;
+    case SSXMSGS::TB_8_MKII:
+        m_modelsAct.at(1)->setChecked(true);
+        break;
+    case SSXMSGS::TB_12_MKII:
+        m_modelsAct.at(2)->setChecked(true);
+        break;
+    case SSXMSGS::TB_6P_MKII:
+        m_modelsAct.at(3)->setChecked(true);
+        break;
+    case SSXMSGS::TB_11P_MKII:
+        m_modelsAct.at(4)->setChecked(true);
+        break;
+    }
 }
 
 Dialog * Dialog::getInstance(){
@@ -145,13 +217,18 @@ void Dialog::_back(){
 }
 
 void Dialog::enableSave( bool enable ){
-    qCDebug(DLG) << Q_FUNC_INFO;
+    qCDebug(DLG) << Q_FUNC_INFO << "enable=" << enable;
     if ( Q_NULLPTR != m_saveAct ) m_saveAct->setEnabled( enable );
 }
 
 void Dialog::enableLoad( bool enable ){
-    qCDebug(DLG) << Q_FUNC_INFO;
+    qCDebug(DLG) << Q_FUNC_INFO << "enable=" << enable;
     if ( Q_NULLPTR != m_loadAct ) m_loadAct->setEnabled( enable );
+}
+
+void Dialog::enableModels( bool enable ){
+    qCDebug(DLG) << Q_FUNC_INFO << "enable=" << enable;
+    if ( Q_NULLPTR != m_ctlActMenu ) m_ctlActMenu->setEnabled( enable );
 }
 
 Dialog::~Dialog(){

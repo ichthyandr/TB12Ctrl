@@ -31,6 +31,7 @@ bool decodeByte( const QVector<uint8_t> & Data, uint8_t & byte ){
     return(true);
 }
 
+t_Models                g_Model{TB_12_MKII};
 GlobalSettings          g_GlobalSettings;
 QVector<BankSettings>   g_BanksSettings;
 
@@ -318,8 +319,12 @@ BankSettings::BankSettings(){
     selectBankAction        = 0;
     selectBankActionProgNum = 0;
 
+    int max_buttons = g_Model;
+    if (max_buttons>100) max_buttons-=100;
 
-    for (uint8_t i = 0; i < FOOT_BUTTONS_NUM; ++i)
+    qCDebug(SSX) << Q_FUNC_INFO << "max_buttons=" << max_buttons;
+
+    for (uint8_t i = 0; i < max_buttons; ++i)
     {
         buttonType[i] = PRESET_CHANGE;//All buttons will preset switchers
         buttonContext[i].presetChangeContext.programsNumbers[0] = i;//preset numbers will match button number;
@@ -361,17 +366,64 @@ BankSettings::~BankSettings(){}
     соответствуют номеру контекста кнопки для данного банка
 */
 
-#define BS_ID_tapCC					123
-#define BS_ID_pedalsCC				124
-#define BS_ID_tunerCC				125
-#define BS_ID_buttonType			126
-#define BS_ID_bankName				127
+// для контекста
+#define BS_ID_CTX_relays				20
+#define BS_ID_CTX_presetChangeContext	21
+#define BS_ID_CTX_commonContext			22
+#define BS_ID_CTX_bankNumber			23
+#define BS_ID_CTX_nameAlias				24
 
+// общие
+#define BS_ID_selectBankAction			121
+#define BS_ID_selectBankActionProgNum	122
+#define BS_ID_tapCC                     123
+#define BS_ID_pedalsCC                  124
+#define BS_ID_tunerCC                   125
+#define BS_ID_buttonType                126
+#define BS_ID_bankName                  127
+
+static
+uint8_t * getDataAndLenghtBScontext( const int paramID, const int btnNum, size_t & InputDataLen, BankSettings & Bank ){
+    void * addr     = Q_NULLPTR;
+    InputDataLen    = 0;
+
+    int max_buttons = g_Model;
+    if (max_buttons>100) max_buttons-=100;
+
+    if ( !((btnNum>=0)&&(btnNum<max_buttons)) ) return(static_cast<uint8_t*>(addr));
+    switch ( paramID ){
+    case BS_ID_CTX_relays:
+        InputDataLen    = sizeof(Bank.buttonContext[btnNum].relays);
+        addr            = &Bank.buttonContext[btnNum].relays;
+        break;
+    case BS_ID_CTX_presetChangeContext:
+        InputDataLen    = sizeof(Bank.buttonContext[btnNum].presetChangeContext);
+        addr            = &Bank.buttonContext[btnNum].presetChangeContext;
+        break;
+    case BS_ID_CTX_commonContext:
+        InputDataLen    = sizeof(Bank.buttonContext[btnNum].commonContext);
+        addr            = &Bank.buttonContext[btnNum].commonContext;
+        break;
+    case BS_ID_CTX_bankNumber:
+        InputDataLen    = sizeof(Bank.buttonContext[btnNum].bankNumber);
+        addr            = &Bank.buttonContext[btnNum].bankNumber;
+        break;
+    case BS_ID_CTX_nameAlias:
+        InputDataLen    = sizeof(Bank.buttonContext[btnNum].nameAlias);
+        addr            = &Bank.buttonContext[btnNum].nameAlias;
+        break;
+    }
+    return(static_cast<uint8_t*>(addr));
+}
 
 static
 uint8_t * getDataAndLenghtBS( const int paramID, size_t & InputDataLen, BankSettings & Bank ){
     void * addr= Q_NULLPTR;
-    if ( paramID < FOOT_BUTTONS_NUM ){
+
+    int max_buttons = g_Model;
+    if (max_buttons>100) max_buttons-=100;
+
+    if ( paramID < max_buttons ){
         // передается контекс кнопки с № paramID = 0 ... (N <FOOT_BUTTONS_NUM)
         InputDataLen    = sizeof(Bank.buttonContext[paramID]);
         addr            = &Bank.buttonContext[paramID];
@@ -379,6 +431,14 @@ uint8_t * getDataAndLenghtBS( const int paramID, size_t & InputDataLen, BankSett
         return(res);
     }
     switch ( paramID ){
+        case BS_ID_selectBankAction:
+            InputDataLen    = sizeof(Bank.selectBankAction);
+            addr            = &Bank.selectBankAction;
+            break;
+        case BS_ID_selectBankActionProgNum:
+            InputDataLen    = sizeof(Bank.selectBankActionProgNum);
+            addr            = &Bank.selectBankActionProgNum;
+            break;
         case BS_ID_tapCC:
             InputDataLen    = sizeof(Bank.tapCc);
             addr            = &Bank.tapCc;
@@ -402,6 +462,48 @@ uint8_t * getDataAndLenghtBS( const int paramID, size_t & InputDataLen, BankSett
     }
     uint8_t * res = static_cast<uint8_t*>(addr);
     return(res);
+}
+
+midiMsg_t encode_BS_context( const uint8_t paramID, const uint8_t btnNum, const uint8_t bankNumber, BankSettings& Bank ){
+    midiMsg_t midiMsg;
+    if ( 127 < bankNumber ) return(midiMsg);
+
+    /*  № по порядку
+    0 - номер устройства в сети
+    1 - код модели устройства от производителя
+    2 - признак настройки банка = 1
+    3 - номер банка bankNumber
+    4 - button Number
+    5 - param Context ID
+    ... data
+    */
+
+    size_t	inputDataLen	= 0;            //input data length in bytes
+    uint8_t * pInputData    = Q_NULLPTR;	//input data address
+
+    pInputData = getDataAndLenghtBScontext( paramID, btnNum, inputDataLen, Bank );
+    if ( Q_NULLPTR==pInputData ) return(midiMsg);
+
+    midiMsg.push_back(MIDI_SYSEX_START);
+    midiMsg.push_back((MANUFACTURER_ID>>16)&0xFF );
+    midiMsg.push_back((MANUFACTURER_ID>>8)&0xFF );
+    midiMsg.push_back( MANUFACTURER_ID&0xFF );
+
+    midiMsg.push_back(NETWORK_NUMBER);
+    midiMsg.push_back(MODEL_NUMBER);
+    midiMsg.push_back(BANKS_MSG);
+    midiMsg.push_back(bankNumber);
+    midiMsg.push_back(btnNum);
+    midiMsg.push_back(paramID);
+
+    for( size_t i=0; i < inputDataLen; i++ ){
+        uint8_t byte = *(pInputData + i);
+        midiMsg << encodeByte( byte );
+    }
+
+    midiMsg.push_back(MIDI_SYSEX_END);
+
+    return(midiMsg);
 }
 
 midiMsg_t encode_BS_param( const uint8_t paramID, const uint8_t bankNumber, BankSettings& Bank ){
@@ -443,6 +545,91 @@ midiMsg_t encode_BS_param( const uint8_t paramID, const uint8_t bankNumber, Bank
     midiMsg.push_back(MIDI_SYSEX_END);
 
     return(midiMsg);
+}
+
+bool decode_BS_context(const uint8_t paramID, const uint8_t btnNum, midiMsg_t & payload ){
+    /*  № по порядку
+    0 - номер устройства в сети
+    1 - код модели устройства от производителя
+    2 - признак настройки банка = 1
+    3 - номер банка bankNumber
+    4 - button Number
+    5 - param Context ID
+    ... data
+    */
+
+    typedef enum {
+        BANK_SETS = 0,
+        BANK_NUMBER,
+        BUTTON_NUMBER,
+        BS_ID_CTX,
+        DATA
+    } State_t;
+
+    if (6 > payload.length()) return (false);
+
+    int             counter     = 0;
+    State_t			state       = BANK_SETS;
+    bool			_do_        = true;
+    uint8_t			bankNumber	= 0;
+    uint8_t         buttonNumber= 0;
+
+    while(1) {
+        switch( state ){
+            case BANK_SETS:
+                if ( BANKS_MSG != payload.at(counter) ) return (false);
+                state = BANK_NUMBER;
+                break;
+            case BANK_NUMBER:
+                if ( 0x7F < payload.at(counter) ) return (false);
+                state = BUTTON_NUMBER;
+                bankNumber = payload.at(counter);
+                if ( bankNumber > 127 ) return(false);
+                break;
+            case BUTTON_NUMBER:
+                if ( 0x7F < payload.at(counter) ) return (false);
+                buttonNumber = payload.at(counter);
+                if ( buttonNumber != btnNum ) return (false);
+                state = BS_ID_CTX;
+                break;
+            case BS_ID_CTX:
+                if ( paramID != payload.at(counter) ) return (false);
+                state = DATA;
+                break;
+            case DATA:
+                _do_ = false;
+                break;
+
+        }
+        if ( false == _do_ ) break;
+        counter++;
+        if ( counter >= payload.length() ) return (false);
+    }
+
+    // нумерация банков с 0, добавляем банки если необходимо
+    while( (bankNumber+1) > g_BanksSettings.size() ){
+        BankSettings bank;
+        g_BanksSettings << bank;
+    }
+
+    size_t	inputDataLen	= 0;            //input data length in bytes
+    uint8_t * pInputData    = Q_NULLPTR;	//input data address
+
+    pInputData = getDataAndLenghtBScontext( paramID, btnNum, inputDataLen, g_BanksSettings[bankNumber] );
+
+    if ( Q_NULLPTR==pInputData ) return(false);
+
+    // декодирование
+    for ( size_t i=0; i<inputDataLen; i++ ){
+        uint8_t             byte = 0;
+        QVector<uint8_t>    pair;
+        pair.push_back( payload.at(counter) );
+        pair.push_back( payload.at(counter + 1) );
+        if (!decodeByte( pair, byte )) return(false);
+        *(pInputData + i) = byte;
+        counter+=2;
+    }
+    return (true);
 }
 
 bool decode_BS_param( const uint8_t paramID, midiMsg_t & payload){
@@ -557,14 +744,27 @@ QVector<midiMsg_t> encode(){
         BankSettings bank = g_BanksSettings.at(i);
 
         // сохраняем контекс кнопки № 0 ... N
+#if 0
         for(uint8_t btnNum=0; btnNum<FOOT_BUTTONS_NUM; btnNum++)
             midiMsgList << encode_BS_param( btnNum, static_cast<uint8_t>(i), bank );
+#endif
+        midiMsgList << encode_BS_param( BS_ID_tapCC,                    static_cast<uint8_t>(i), bank );
+        midiMsgList << encode_BS_param( BS_ID_pedalsCC,                 static_cast<uint8_t>(i), bank );
+        midiMsgList << encode_BS_param( BS_ID_tunerCC,                  static_cast<uint8_t>(i), bank );
+        midiMsgList << encode_BS_param( BS_ID_buttonType,               static_cast<uint8_t>(i), bank );
+        midiMsgList << encode_BS_param( BS_ID_bankName,                 static_cast<uint8_t>(i), bank );
+        midiMsgList << encode_BS_param( BS_ID_selectBankAction,         static_cast<uint8_t>(i), bank );
+        midiMsgList << encode_BS_param( BS_ID_selectBankActionProgNum,  static_cast<uint8_t>(i), bank );
 
-        midiMsgList << encode_BS_param( BS_ID_tapCC,        static_cast<uint8_t>(i), bank );
-        midiMsgList << encode_BS_param( BS_ID_pedalsCC,     static_cast<uint8_t>(i), bank );
-        midiMsgList << encode_BS_param( BS_ID_tunerCC,      static_cast<uint8_t>(i), bank );
-        midiMsgList << encode_BS_param( BS_ID_buttonType,   static_cast<uint8_t>(i), bank );
-        midiMsgList << encode_BS_param( BS_ID_bankName,     static_cast<uint8_t>(i), bank );
+        int max_buttons = g_Model;
+        if (max_buttons>100) max_buttons-=100;
+        for(uint8_t btnNum=0; btnNum < max_buttons; btnNum++){
+            midiMsgList << encode_BS_context(BS_ID_CTX_relays,              btnNum,  static_cast<uint8_t>(i), bank );
+            midiMsgList << encode_BS_context(BS_ID_CTX_nameAlias,           btnNum,  static_cast<uint8_t>(i), bank );
+            midiMsgList << encode_BS_context(BS_ID_CTX_bankNumber,          btnNum,  static_cast<uint8_t>(i), bank );
+            midiMsgList << encode_BS_context(BS_ID_CTX_commonContext,       btnNum,  static_cast<uint8_t>(i), bank );
+            midiMsgList << encode_BS_context(BS_ID_CTX_presetChangeContext, btnNum,  static_cast<uint8_t>(i), bank );
+        }
     }
 
     return(midiMsgList);
@@ -611,15 +811,27 @@ QVector<midiMsg_t> encodeBank(int number){
     BankSettings bank = g_BanksSettings.at(number);
 
     // сохраняем контекс кнопки № 0 ... N
+#if 0
     for(uint8_t btnNum=0; btnNum<FOOT_BUTTONS_NUM; btnNum++)
         midiMsgList << encode_BS_param( btnNum, static_cast<uint8_t>(number), bank );
+#endif
+    midiMsgList << encode_BS_param( BS_ID_tapCC,                    static_cast<uint8_t>(number), bank );
+    midiMsgList << encode_BS_param( BS_ID_pedalsCC,                 static_cast<uint8_t>(number), bank );
+    midiMsgList << encode_BS_param( BS_ID_tunerCC,                  static_cast<uint8_t>(number), bank );
+    midiMsgList << encode_BS_param( BS_ID_buttonType,               static_cast<uint8_t>(number), bank );
+    midiMsgList << encode_BS_param( BS_ID_bankName,                 static_cast<uint8_t>(number), bank );
+    midiMsgList << encode_BS_param( BS_ID_selectBankAction,         static_cast<uint8_t>(number), bank );
+    midiMsgList << encode_BS_param( BS_ID_selectBankActionProgNum,  static_cast<uint8_t>(number), bank );
 
-    midiMsgList << encode_BS_param( BS_ID_tapCC,        static_cast<uint8_t>(number), bank );
-    midiMsgList << encode_BS_param( BS_ID_pedalsCC,     static_cast<uint8_t>(number), bank );
-    midiMsgList << encode_BS_param( BS_ID_tunerCC,      static_cast<uint8_t>(number), bank );
-    midiMsgList << encode_BS_param( BS_ID_buttonType,   static_cast<uint8_t>(number), bank );
-    midiMsgList << encode_BS_param( BS_ID_bankName,     static_cast<uint8_t>(number), bank );
-
+    int max_buttons = g_Model;
+    if (max_buttons>100) max_buttons-=100;
+    for(uint8_t btnNum=0; btnNum < max_buttons; btnNum++){
+        midiMsgList << encode_BS_context(BS_ID_CTX_relays,              btnNum,  static_cast<uint8_t>(number), bank );
+        midiMsgList << encode_BS_context(BS_ID_CTX_nameAlias,           btnNum,  static_cast<uint8_t>(number), bank );
+        midiMsgList << encode_BS_context(BS_ID_CTX_bankNumber,          btnNum,  static_cast<uint8_t>(number), bank );
+        midiMsgList << encode_BS_context(BS_ID_CTX_commonContext,       btnNum,  static_cast<uint8_t>(number), bank );
+        midiMsgList << encode_BS_context(BS_ID_CTX_presetChangeContext, btnNum,  static_cast<uint8_t>(number), bank );
+    }
     return(midiMsgList);
 }
 
@@ -641,11 +853,12 @@ TRACE FUNCTIONS CODE in bits, send as bytes chain in ack message
 [0] function ID
 */
 /* trace length buffer */
-#define TRACE_LENGTH					(40) /* ACK full msg length = 8*/
+#define TRACE_LENGTH					(90) /* ACK full msg length = 8*/
 /* functions IDs */
 #define handleMidiSysExSettings_ID		(1)
 #define load_GS_param_ID				(2)
 #define load_BS_param_ID				(3)
+#define load_BS_context_ID				(0)
 /* ErrNo for handleMidiSysExSettings */
 #define HMS_BAD_FIRST_CHECK				(1)
 #define HMS_NO_MIDI_SYSEX_START			(2)
@@ -677,6 +890,21 @@ TRACE FUNCTIONS CODE in bits, send as bytes chain in ack message
 #define LBS_COUNTER_OVERRUN				(8)
 #define LBS_BAD_GDL_BS					(9)
 #define LBS_NO_DECODE_BYTE				(8)
+/* ErrNo for load_BS_context */
+#define LCX_BAD_PDATA					(1)
+#define LCX_BAD_PGLOBALS				(2)
+#define LCX_BAD_LEN						(3)
+#define LCX_BAD_BANKS_MSG				(4)
+#define LCX_BAD_BANK_NUM1				(5)
+#define LCX_BAD_BANK_NUM2				(6)
+#define LCX_BAD_BTN_NUM1				(7)
+#define LCX_BAD_BTN_NUM2				(8)
+#define LCX_BAD_CTX_ID					(9)
+#define LCX_COUNTER_OVERRUN				(10)
+#define LCX_BAD_GDL_BTN					(11)
+#define LCX_BAD_GDL_CTX					(12)
+#define LCX_NO_DECODE_BYTE				(13)
+
 
 #include <QMap>
 static
@@ -779,7 +1007,7 @@ void decodeTRACE( QVector<uint8_t> trace ){
     }
     //load_BS_param
     QMap< int, QString > bsMap = {
-        { 1,"BS_ID_ButtonCotext_1"},
+/*        { 1,"BS_ID_ButtonCotext_1"},
         { 2,"BS_ID_ButtonCotext_2"},
         { 3,"BS_ID_ButtonCotext_3"},
         { 4,"BS_ID_ButtonCotext_4"},
@@ -790,12 +1018,14 @@ void decodeTRACE( QVector<uint8_t> trace ){
         { 9,"BS_ID_ButtonCotext_9"},
         {10,"BS_ID_ButtonCotext_10"},
         {11,"BS_ID_ButtonCotext_11"},
-        {12,"BS_ID_ButtonCotext_12"},
-        {13,"BS_ID_tapCC"},
-        {14,"BS_ID_pedalsCC"},
-        {15,"BS_ID_tunerCC"},
-        {16,"BS_ID_buttonType"},
-        {17,"BS_ID_bankName"}
+        {12,"BS_ID_ButtonCotext_12"},*/
+        { 1,"BS_ID_tapCC"},
+        { 2,"BS_ID_pedalsCC"},
+        { 3,"BS_ID_tunerCC"},
+        { 4,"BS_ID_buttonType"},
+        { 5,"BS_ID_bankName"},
+        { 6,"BS_ID_selectBankAction"},
+        { 7,"BS_ID_selectBankActionProgNum"}
     };
     QMap<int, QString> errBsMap = {
         {LBS_BAD_PDATA,             "LBS_BAD_PDATA"},
@@ -809,7 +1039,8 @@ void decodeTRACE( QVector<uint8_t> trace ){
         {LBS_BAD_GDL_BS,            "LBS_BAD_GDL_BS"},
         {LBS_NO_DECODE_BYTE,        "LBS_NO_DECODE_BYTE"},
     };
-    for( int i=1; i<=17; i++ ){
+
+    for( int i=1; i<=bsMap.size(); i++ ){
         tcode = trace.takeFirst();
         if ( load_BS_param_ID == (tcode & 0x03)){
             QString str = "load_BS_param " + bsMap.value(i) + " ";
@@ -828,6 +1059,44 @@ void decodeTRACE( QVector<uint8_t> trace ){
         else {
             qCDebug(SSX) << Q_FUNC_INFO << "not load_BS_param_ID!!!! abort";
             return;
+        }
+    }
+    //load_BS_context
+    QMap<int, QString> errCtxMap = {
+        { LCX_BAD_PDATA,        "LCX_BAD_PDATA" },
+        { LCX_BAD_PGLOBALS,     "LCX_BAD_PGLOBALS" },
+        { LCX_BAD_LEN,			"LCX_BAD_LEN" },
+        { LCX_BAD_BANKS_MSG,    "LCX_BAD_BANKS_MSG" },
+        { LCX_BAD_BANK_NUM1,    "LCX_BAD_BANK_NUM1" },
+        { LCX_BAD_BANK_NUM2,    "LCX_BAD_BANK_NUM2" },
+        { LCX_BAD_BTN_NUM1,     "LCX_BAD_BTN_NUM1" },
+        { LCX_BAD_BTN_NUM2,     "LCX_BAD_BTN_NUM2" },
+        { LCX_BAD_CTX_ID,       "LCX_BAD_CTX_ID" },
+        { LCX_COUNTER_OVERRUN,  "LCX_COUNTER_OVERRUN" },
+        { LCX_BAD_GDL_BTN,      "LCX_BAD_GDL_BTN" },
+        { LCX_BAD_GDL_CTX,      "LCX_BAD_GDL_CTX" },
+        { LCX_NO_DECODE_BYTE,   "LCX_NO_DECODE_BYTE" },
+    };
+    while( !trace.empty() ){
+        tcode = trace.takeFirst();
+        if ( tcode !=0 ){
+            if ( load_BS_context_ID == (tcode & 0x03)){
+                QString str = "load_BS_context ";
+                if ( 0 != (tcode & 0x04) ){
+                    str += "SUCC";
+                    qCDebug(SSX) << Q_FUNC_INFO << str;
+                }
+                else {
+                    str += "FAIL ";
+                    tcode = (tcode>>3) & 0x0f;
+                    QString err = errCtxMap.value(tcode);
+                    if ( 0 == err.length() ) err="UNDEF";
+                    qCDebug(SSX) << Q_FUNC_INFO << str << err;
+                }
+            }
+            else {
+                qCDebug(SSX) << Q_FUNC_INFO << "not load_BS_context_ID!!!! " << hex << tcode;
+            }
         }
     }
 }
@@ -1022,12 +1291,14 @@ uint8_t decode(const midiMsg_t &midiMsg ){
 
     // decode banks messages
     // пытаемся декодировать контекст кнопки
+#if 0
     for(uint8_t btnNum=0; btnNum<FOOT_BUTTONS_NUM; btnNum++){
         if (decode_BS_param( btnNum, payload)){
             qCDebug(SSX) << Q_FUNC_INFO << "DECODED BS context for btn=" << btnNum;
             return(BANKS_MSG);
         }
     }
+#endif
 
     if (decode_BS_param( BS_ID_tapCC,               payload )){
         qCDebug(SSX) << Q_FUNC_INFO << "BS_ID_tapCC decoded";
@@ -1049,6 +1320,40 @@ uint8_t decode(const midiMsg_t &midiMsg ){
         qCDebug(SSX) << Q_FUNC_INFO << "BS_ID_bankName decoded";
         return(BANKS_MSG);
     }
+    if (decode_BS_param( BS_ID_selectBankAction,    payload )){
+        qCDebug(SSX) << Q_FUNC_INFO << "BS_ID_selectBankAction decoded";
+        return(BANKS_MSG);
+    }
+    if (decode_BS_param( BS_ID_selectBankActionProgNum,    payload )){
+        qCDebug(SSX) << Q_FUNC_INFO << "case BS_ID_selectBankActionProgNum decoded";
+        return(BANKS_MSG);
+    }
+
+    int max_buttons = g_Model;
+    if (max_buttons>100) max_buttons-=100;
+    for(uint8_t btnNum=0; btnNum < max_buttons; btnNum++){
+        if (decode_BS_context( BS_ID_CTX_relays, btnNum, payload)){
+            qCDebug(SSX) << Q_FUNC_INFO << "DECODED BS_ID_CTX_relays for btn=" << btnNum;
+            return(BANKS_MSG);
+        }
+        if (decode_BS_context( BS_ID_CTX_nameAlias, btnNum, payload)){
+            qCDebug(SSX) << Q_FUNC_INFO << "DECODED BS_ID_CTX_nameAlias for btn=" << btnNum;
+            return(BANKS_MSG);
+        }
+        if (decode_BS_context( BS_ID_CTX_bankNumber, btnNum, payload)){
+            qCDebug(SSX) << Q_FUNC_INFO << "DECODED BS_ID_CTX_bankNumber for btn=" << btnNum;
+            return(BANKS_MSG);
+        }
+        if (decode_BS_context( BS_ID_CTX_commonContext, btnNum, payload)){
+            qCDebug(SSX) << Q_FUNC_INFO << "DECODED BS_ID_CTX_commonContext for btn=" << btnNum;
+            return(BANKS_MSG);
+        }
+        if (decode_BS_context( BS_ID_CTX_presetChangeContext, btnNum, payload)){
+            qCDebug(SSX) << Q_FUNC_INFO << "DECODED BS_ID_CTX_commonContext for btn=" << btnNum;
+            return(BANKS_MSG);
+        }
+    }
+
     qCDebug(SSX) << Q_FUNC_INFO << "got unknown param!";
 
     return(UNKNOWN_MSG);
@@ -1069,33 +1374,12 @@ bool save( QString fileName, QString & error ){
     QJsonDocument   doc;
     QJsonObject     root;
 
+    root["Model"]   = g_Model;
+
     /// глобальные настройки
     /////////////////////////////////////////////////////////////////
     QJsonObject     globals;
-#if 0
-    uint8_t             bnkNum;                             //Текущий номер банка. В настройках он меняется когда выбираем банк для сохранения/загрузки( Banks )
-    uint8_t             midiChanNum;                        //System Setup -> MIDI channel. Диапазон от 0 до 15, на экране отображается от 1 до 16
-    UseBankSelectMess   useBankSelectMess;                  //System Setup -> Prg. ch. mode
-    BankSelectMessType  bankSelectMessType;                 //System Setup -> Bnk. Sel mode
-    ExternalBs2Pedal    bnkSwOnBoard;                       //System Setup -> Bank sw. mode
-    ShowPresetBank      Show_pr_name;                       //System Setup -> Show pr. name
-    TargetDevice        targetDevice;                       //System Setup -> Target device
-    UsbBaudrate         usbBaudrate;                        //System Setup -> USB baudrate
-    InputThrough        inputThrough[TOTAL_MIDI_INTERFACES];//System Setup ->MIDI thru map
-    uint8_t             maxBankNumber;                      //System Setup ->Max. bank
-    uint8_t             screenBrightness;                   //System Setup -> Screen brightness. отображаем от 1 до 10
-    uint8_t             screenContrast;                     //System Setup ->Screen contrast. от 0 до 255
-    ExpPedalType        expPtype[3];                        //Exp&Tap&Tune -> Exp. P1(2) type.
-    HoldTime            buttonHoldTime;                     //Exp&Tap&Tune -> BUT hold time. Диапазон от 1 до 15, в меню отобржажается как 100ms, 200ms, ..., 1500ms
-    TapDisplayType      tapDisplayType;                     //Exp&Tap&Tune -> Tap display
-    TapType             tapType;                            //Exp&Tap&Tune -> Tap type
-    PedalLedView        pedalLedView;                       //Pedal view -> Display type
-    PedalTunerScheme    pedalTunerScheme;                   //Pedal view -> Tuner scheme. Тут пока только два значения 0 и 1. Отобразить можно как Scheme 1 и  Scheme 2
-    uint8_t             pedalBrightness;                    //Pedal view -> BRIGHTNESS. Яркость светодидов педали. отображаем от 1 до 10
-    //This setting are not mapped into GUI, but is stores in global settings during pedals calibration
-    uint8_t             pLowPos[3];
-    uint8_t             pHighPos[3];
-#endif
+
     globals["bnkNum"]               = g_GlobalSettings.bnkNum;
     globals["midiChanNum"]          = g_GlobalSettings.midiChanNum;
     globals["useBankSelectMess"]    = g_GlobalSettings.useBankSelectMess;
@@ -1139,18 +1423,22 @@ bool save( QString fileName, QString & error ){
     for( auto bankSets: g_BanksSettings){
         QJsonObject bank;
         // tapCc
-        bank["tapCc"]               = bankSets.tapCc;
+        bank["tapCc"]                   = bankSets.tapCc;
         // tunerCc
-        bank["tunerCc"]             = bankSets.tunerCc;
+        bank["tunerCc"]                 = bankSets.tunerCc;
         // pedalsCc
         QJsonArray pedalsCc;
         for (int i=0; i<4 ; i++) pedalsCc << bankSets.pedalsCc[i];
-        bank["pedalsCc"]            = pedalsCc;
+        bank["pedalsCc"]                = pedalsCc;
         // BankName
         char buff[BANK_NAME_NMAX_SIZE+1];
         ::memset( buff, 0, BANK_NAME_NMAX_SIZE + 1 );
         ::memcpy( buff, bankSets.BankName, BANK_NAME_NMAX_SIZE);
-        bank["BankName"]            = QString(buff);
+        bank["BankName"]                = QString(buff);
+        // selectBankAction;
+        bank["selectBankAction"]        = bankSets.selectBankAction;
+        // selectBankActionProgNum;
+        bank["selectBankActionProgNum"] = bankSets.selectBankActionProgNum;
         // buttonType
         QJsonArray buttonType;
         for ( int i=0; i<FOOT_BUTTONS_NUM; i++ ) buttonType << bankSets.buttonType[i];
@@ -1193,6 +1481,7 @@ bool save( QString fileName, QString & error ){
             contolAndNrpnChangeContext["paramMsbOffValue"]      = bankSets.buttonContext[i].commonContext.contolAndNrpnChangeContext_.paramMsbOffValue;
             contolAndNrpnChangeContext["paramLsbOffValue"]      = bankSets.buttonContext[i].commonContext.contolAndNrpnChangeContext_.paramLsbOffValue;
             contolAndNrpnChangeContext["autoSendState"]         = bankSets.buttonContext[i].commonContext.contolAndNrpnChangeContext_.autoSendState;
+            contolAndNrpnChangeContext["vendorBlockId"]         = bankSets.buttonContext[i].commonContext.contolAndNrpnChangeContext_.vendorBlockId;
 
             commonContext["contolAndNrpnChangeContext"] = contolAndNrpnChangeContext;
 
@@ -1262,19 +1551,15 @@ bool load( QString fileName, QString & error ){
     try {
         if (doc.object().isEmpty())                             throw( QObject::tr("cant get root object") );
         QJsonObject root = doc.object();
+        if (root.value("Model").isUndefined())                  throw( QObject::tr("no key 'Model'") );
+        g_Model = static_cast<t_Models>(root.value("Model").toInt());
+        int max_buttons = g_Model;
+        if ( max_buttons>100 ) max_buttons-=100;
         /// GLOBALS
         if (root.value("Globals").isUndefined())                throw( QObject::tr("no key 'Globals'") );
         if ( !root.value("Globals").isObject() )                throw( QObject::tr("bad 'Globals' type") );
         QJsonObject globals = root.value("Globals").toObject();
-#if 0
-        globals["bnkNum"]               = g_GlobalSettings.bnkNum;
-        globals["midiChanNum"]          = g_GlobalSettings.midiChanNum;
-        globals["useBankSelectMess"]    = g_GlobalSettings.useBankSelectMess;
-        globals["bnkSwOnBoard"]         = g_GlobalSettings.bnkSwOnBoard;
-        globals["Show_pr_name"]         = g_GlobalSettings.Show_pr_name;
-        globals["targetDevice"]         = g_GlobalSettings.targetDevice;
-        globals["usbBaudrate"]          = g_GlobalSettings.usbBaudrate;
-#endif
+
         if ( globals.value("bnkNum").isUndefined() )            throw( QObject::tr("no key 'bnkNum'") );
         if ( globals.value("midiChanNum").isUndefined() )       throw( QObject::tr("no key 'midiChanNum'") );
         if ( globals.value("useBankSelectMess").isUndefined() ) throw( QObject::tr("no key 'useBankSelectMess'") );
@@ -1290,11 +1575,7 @@ bool load( QString fileName, QString & error ){
         g_GlobalSettings.Show_pr_name           = static_cast<ShowPresetBank>(globals.value("Show_pr_name").toInt());
         g_GlobalSettings.targetDevice           = static_cast<TargetDevice>(globals.value("targetDevice").toInt());
         g_GlobalSettings.usbBaudrate            = static_cast<UsbBaudrate>(globals.value("usbBaudrate").toInt());
-#if 0
-        QJsonArray inputThrough;
-        for (int i=0; i<TOTAL_MIDI_INTERFACES; i++ ) inputThrough << g_GlobalSettings.inputThrough[i];
-        globals["inputThrough"]         = inputThrough;
-#endif
+
         if ( globals.value("inputThrough").isUndefined() )      throw( QObject::tr("no key 'inputThrough'") );
         if ( !globals.value("inputThrough").isArray() )         throw( QObject::tr("bad 'inputThrough' type") );
         QJsonArray inputThroughArr = globals.value("inputThrough").toArray();
@@ -1302,11 +1583,7 @@ bool load( QString fileName, QString & error ){
         for (int i=0; i<TOTAL_MIDI_INTERFACES; i++ ){
             g_GlobalSettings.inputThrough[i] = static_cast<InputThrough>( inputThroughArr.at(i).toInt());
         }
-#if 0
-        globals["maxBankNumber"]        = g_GlobalSettings.maxBankNumber;
-        globals["screenBrightness"]     = g_GlobalSettings.screenBrightness;
-        globals["screenContrast"]       = g_GlobalSettings.screenContrast;
-#endif
+
         if ( globals.value("maxBankNumber").isUndefined() )     throw( QObject::tr("no key 'maxBankNumber'") );
         if ( globals.value("screenBrightness").isUndefined() )  throw( QObject::tr("no key 'screenBrightness'") );
         if ( globals.value("screenContrast").isUndefined() )    throw( QObject::tr("no key 'screenContrast'") );
@@ -1314,11 +1591,7 @@ bool load( QString fileName, QString & error ){
         g_GlobalSettings.maxBankNumber          = static_cast<uint8_t>(globals.value("maxBankNumber").toInt());
         g_GlobalSettings.screenBrightness       = static_cast<uint8_t>(globals.value("screenBrightness").toInt());
         g_GlobalSettings.screenContrast         = static_cast<UseBankSelectMess>(globals.value("screenContrast").toInt());
-#if 0
-        QJsonArray expPtype;
-        for (int i=0; i<3; i++ ) expPtype << g_GlobalSettings.expPtype[i];
-        globals["expPtype"]             = expPtype;
-#endif
+
         if ( globals.value("expPtype").isUndefined() )          throw( QObject::tr("no key 'expPtype'") );
         if ( !globals.value("expPtype").isArray() )             throw( QObject::tr("bad 'expPtype' type") );
         QJsonArray expPtypeArr = globals.value("expPtype").toArray();
@@ -1326,14 +1599,7 @@ bool load( QString fileName, QString & error ){
         for (int i=0; i<3; i++ ){
             g_GlobalSettings.expPtype[i] = static_cast<ExpPedalType>( expPtypeArr.at(i).toInt());
         }
-#if 0
-        globals["buttonHoldTime"]       = g_GlobalSettings.buttonHoldTime;
-        globals["tapDisplayType"]       = g_GlobalSettings.tapDisplayType;
-        globals["tapType"]              = g_GlobalSettings.tapType;
-        globals["pedalLedView"]         = g_GlobalSettings.pedalLedView;
-        globals["pedalTunerScheme"]     = g_GlobalSettings.pedalTunerScheme;
-        globals["pedalBrightness"]      = g_GlobalSettings.pedalBrightness;
-#endif
+
         if ( globals.value("buttonHoldTime").isUndefined() )    throw( QObject::tr("no key 'buttonHoldTime'") );
         if ( globals.value("tapDisplayType").isUndefined() )    throw( QObject::tr("no key 'tapDisplayType'") );
         if ( globals.value("tapType").isUndefined() )           throw( QObject::tr("no key 'tapType'") );
@@ -1347,16 +1613,7 @@ bool load( QString fileName, QString & error ){
         g_GlobalSettings.bnkSwOnBoard           = static_cast<ExternalBs2Pedal>(globals.value("bnkSwOnBoard").toInt());
         g_GlobalSettings.Show_pr_name           = static_cast<ShowPresetBank>(globals.value("Show_pr_name").toInt());
         g_GlobalSettings.targetDevice           = static_cast<TargetDevice>(globals.value("targetDevice").toInt());
-#if 0
-        QJsonArray pLowPos;
-        QJsonArray pHighPos;
-        for (int i=0; i<3; i++ ) {
-            pLowPos << g_GlobalSettings.pLowPos[i];
-            pHighPos<< g_GlobalSettings.pHighPos[i];
-        }
-        globals["pLowPos"]              = pLowPos;
-        globals["pHighPos"]             = pHighPos;
-#endif
+
         if ( globals.value("pLowPos").isUndefined() )           throw( QObject::tr("no key 'pLowPos'") );
         if ( globals.value("pHighPos").isUndefined() )          throw( QObject::tr("no key 'pHighPos'") );
         if ( !globals.value("pLowPos").isArray() )              throw( QObject::tr("bad 'pLowPos' type") );
@@ -1383,6 +1640,14 @@ bool load( QString fileName, QString & error ){
             QJsonObject bankSetsObj = bankSetsVal.toObject();
 
             BankSettings bankSets;
+            // selectBankAction;
+            if (bankSetsObj.value("selectBankAction").isUndefined())
+                                                                throw( QObject::tr("no key 'selectBankAction'") ) ;
+            bankSets.selectBankAction       = static_cast<uint8_t>(bankSetsObj.value("selectBankAction").toInt());
+            // selectBankActionProgNum;
+            if (bankSetsObj.value("selectBankActionProgNum").isUndefined())
+                                                                throw( QObject::tr("no key 'selectBankActionProgNum'") ) ;
+            bankSets.selectBankActionProgNum= static_cast<uint8_t>(bankSetsObj.value("selectBankActionProgNum").toInt());
             // bankname
             if (bankSetsObj.value("BankName").isUndefined())    throw( QObject::tr("no key 'BankName'") ) ;
             if (!bankSetsObj.value("BankName").isString())      throw( QObject::tr("'BankName' is not string") );
@@ -1519,9 +1784,14 @@ bool load( QString fileName, QString & error ){
                         throw (QObject::tr("no 'paramMsbOnValue' key in contolAndNrpnChangeContext"));
                     bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramMsbOnValue =
                             static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramMsbOnValue").toInt());
+
+                    //vendorBlockId
+                    if (contolAndNrpnChangeContextObj.value("vendorBlockId").isUndefined())
+                        throw (QObject::tr("no 'vendorBlockId' key in contolAndNrpnChangeContext"));
+                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.vendorBlockId =
+                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("vendorBlockId").toInt());
                 }
             }
-
             ////// if all ok, add it to g_BanksSettings
             g_BanksSettings << bankSets;
         }
@@ -1531,11 +1801,6 @@ bool load( QString fileName, QString & error ){
         qCCritical(SSX) << Q_FUNC_INFO << error;
         return( false );
     }
-
-
-
     return(true);
 }
-
-
 }//SSXMSGS

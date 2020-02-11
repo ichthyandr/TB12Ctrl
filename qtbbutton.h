@@ -18,6 +18,9 @@ public:
     /// update button view
     ///\param bank[in] - bank number;
     void update( int bank );
+    /// set/unset blanked
+    ///\param blanked[in] - true or false
+    void setBlanked( bool blanked = true );
 private:
     /// номер кнопки
     int m_btnNumber{1};
@@ -28,6 +31,8 @@ private:
     /// \param number[in]   - button number [1..FOOT_BUTTONS_NUM]
     /// \param bank[in]     - bank number 0...
     static QPixmap getIcon( const int number, const int bank );
+    /// признак - кнопка рабочая или нет
+    bool m_blanked{false};
 };
 
 #endif // QTBBUTTON_H

@@ -32,6 +32,8 @@ public:
     /// \param err[out] - error string
     /// \return true - if success
     bool saveFile( QString fileName, QString & err );
+    /// reinit system
+    void reset();
 private:
     /// набор команд:
     /// -1      изменены Globals settings

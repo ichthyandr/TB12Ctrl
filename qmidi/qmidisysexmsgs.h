@@ -6,6 +6,7 @@
 #include <QLoggingCategory>
 Q_DECLARE_LOGGING_CATEGORY(SSX)
 
+/// header definitions
 #define MANUFACTURER_ID         (0x007F7F)
 #define NETWORK_NUMBER          (0x00)
 #define MODEL_NUMBER            (0x00)
@@ -40,11 +41,29 @@ Q_DECLARE_LOGGING_CATEGORY(SSX)
 #define RELAY_MASK_OPEN         (0x02)
 #define RELAY_MASK_MOMENTARY	(0x03)
 
-
-
 typedef QVector<uchar>          midiMsg_t;
 
 namespace SSXMSGS {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///
+///									M O D E L S
+///
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// models types
+typedef enum {
+    // models w/o pedals
+    TB_5_MKII       = 5,    //number buttons
+    TB_8_MKII       = 8,
+    TB_12_MKII      = 12,
+    // models with pedals
+    TB_6P_MKII      = 105,  // number buttons - 100
+    TB_11P_MKII     = 110,
+} t_Models;
+
+/// global decloration g_Model
+extern t_Models g_Model;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///

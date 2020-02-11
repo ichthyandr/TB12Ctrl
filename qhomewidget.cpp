@@ -254,6 +254,7 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
 
             Dialog::getInstance()->enableLoad( false );
             Dialog::getInstance()->enableSave( false );
+            Dialog::getInstance()->enableModels( false );
         }
     });
     connect(&m_qmidiin,     &QIN::Controller::s_ack, [=](){
@@ -284,6 +285,7 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
             sysSetupWidget->updateData();
             Dialog::getInstance()->enableLoad( true );
             Dialog::getInstance()->enableSave( true );
+            Dialog::getInstance()->enableModels( true );
         }
     });
     connect(&m_qmidiout,    &QOUT::Controller::s_sent,[=](){
@@ -302,6 +304,7 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
 
             Dialog::getInstance()->enableLoad( false );
             Dialog::getInstance()->enableSave( false );
+            Dialog::getInstance()->enableModels( false );
         }
     });
     connect(&m_qmidiout,    &QOUT::Controller::s_end,[=](){
@@ -322,6 +325,7 @@ QHomeWidget::QHomeWidget(QWidget *parent) : QWidget(parent){
 
             Dialog::getInstance()->enableLoad( true );
             Dialog::getInstance()->enableSave( true );
+            Dialog::getInstance()->enableModels( true );
         }
     });
 
@@ -358,13 +362,32 @@ void QHomeWidget::updTitle(){
 
     int index = bankCombo->currentIndex();
     if (index >= 0){
+        QString modelName = QString("TB12Ctrl");
+        switch ( SSXMSGS::g_Model ){
+        case SSXMSGS::TB_5_MKII:
+            modelName = QString("TB-5 MKII");
+            break;
+        case SSXMSGS::TB_8_MKII:
+            modelName = QString("TB-8 MKII");
+            break;
+        case SSXMSGS::TB_12_MKII:
+            modelName = QString("TB-12 MKII");
+            break;
+        case SSXMSGS::TB_6P_MKII:
+            modelName = QString("TB-6P MKII");
+            break;
+        case SSXMSGS::TB_11P_MKII:
+            modelName = QString("TB-11P MKII");
+            break;
+        }
+
         QString text= bankCombo->itemText( index );
 
         QString appName =
         (m_cmdSet.isEmpty())?
-                    QString("%1 - %2").arg(QString("TB12Ctrl")).arg(text)
+                    QString("%1 - %2").arg(modelName).arg(text)
                   :
-                    QString("%1 - %2 [Config changed]").arg(QString("TB12Ctrl")).arg(text);
+                    QString("%1 - %2 [Config changed]").arg(modelName).arg(text);
 
         QGuiApplication::setApplicationDisplayName(appName);
         QCoreApplication::setApplicationName(appName);
@@ -394,6 +417,7 @@ void QHomeWidget::_loadNames(){
         bankCombo->addItems( bankNames );
         bankCombo->setCurrentIndex(0);
         /// update buttons;
+        QButtonsWidget::getInstance()->maskBtns();
         QButtonsWidget::getInstance()->update(0);
     }
     else {
@@ -407,12 +431,65 @@ QHomeWidget::~QHomeWidget(){
     m_qmidiout.off();
 }
 
+void QHomeWidget::reset(){
+    qCDebug(HOM) << Q_FUNC_INFO;
+    SSXMSGS::init();
+    _loadNames();
+
+    auto bankCombo = findChild<QComboBox*>(_bankCombo);
+    if ( Q_NULLPTR == bankCombo ){
+        qCCritical(HOM) << Q_FUNC_INFO << "can't find combo";
+        return;
+    }
+    auto tabWidget = findChild<QTabWidget*>(_tabWidget);
+    if ( Q_NULLPTR == tabWidget ){
+        qCCritical(HOM) << Q_FUNC_INFO << "can't find tabwidget";
+        return;
+    }
+    auto sendBankBtn = findChild<QPushButton*>(_sendBankBtn);
+    if ( Q_NULLPTR == sendBankBtn ){
+        qCCritical(HOM) << Q_FUNC_INFO << "can't find send bank button";
+        return;
+    }
+    auto inPortCmb  = findChild<QComboBox*>(_inPortCmb);
+    if ( Q_NULLPTR == inPortCmb ){
+        qCCritical(HOM) << Q_FUNC_INFO << "can't find in port combo";
+        return;
+    }
+    auto outPortCmb = findChild<QComboBox*>(_outPortCmb);
+    if ( Q_NULLPTR == outPortCmb ){
+        qCCritical(HOM) << Q_FUNC_INFO << "can't find out port combo";
+        return;
+    }
+    auto onBtn = findChild<QPushButton*>(_onBtn);
+    if ( Q_NULLPTR == onBtn ){
+        qCCritical(HOM) << Q_FUNC_INFO << "can't find on button";
+        return;
+    }
+    auto sendBtn = findChild<QPushButton*>(_sendBtn);
+    if ( Q_NULLPTR == sendBtn ){
+        qCCritical(HOM) << Q_FUNC_INFO << "can't find send button";
+        return;
+    }
+
+    m_cmdSet.clear();
+    SSXMSGS::init();
+    _loadNames();
+
+    bankCombo->setDisabled(true);
+    tabWidget->setDisabled(true);
+    sendBankBtn->setDisabled(true);
+    inPortCmb->setDisabled(m_Connected);
+    outPortCmb->setDisabled(m_Connected);
+    sendBtn->setDisabled(true);
+    if ( !onBtn->isEnabled() ) onBtn->setEnabled(true);
+
+    Dialog::getInstance()->enableSave( false );
+}
+
 QHomeWidget * QHomeWidget::getInstance(){
     return(g_hw);
 }
-
-///QString err;
-///SSXMSGS::load("TB12Ctrl.json", err );
 
 bool QHomeWidget::loadFile( QString fileName, QString & err ){
     qCDebug(HOM) << Q_FUNC_INFO << "fileName=" << fileName;
@@ -487,6 +564,7 @@ bool QHomeWidget::loadFile( QString fileName, QString & err ){
         updTitle();
 
         Dialog::getInstance()->enableSave( true );
+        Dialog::getInstance()->refreshModel();
     }
     else {
         m_cmdSet.clear();
@@ -502,8 +580,8 @@ bool QHomeWidget::loadFile( QString fileName, QString & err ){
         sendBtn->setEnabled(m_Connected);
 
         Dialog::getInstance()->enableSave( false );
-    }
 
+    }
     return (res);
 }
 

@@ -10,6 +10,9 @@
 Q_LOGGING_CATEGORY( QTB, "QTB")
 
 QTBbutton::QTBbutton(const int number, QWidget *parent):QPushButton(parent), m_btnNumber(number){
+
+    qCDebug(QTB) << Q_FUNC_INFO << "btnNumber=" << number;
+
     setFixedSize(130,130);
     setIconSize(QSize(120,120));
 
@@ -22,8 +25,8 @@ QTBbutton::QTBbutton(const int number, QWidget *parent):QPushButton(parent), m_b
 
 QPixmap QTBbutton::getIcon( const int number ){
     QPixmap pix(120,120);
-    //pix.fill(Qt::black);
     pix.fill(Qt::transparent);
+
     QPainter painter(&pix);
     painter.setPen( QColor(Qt::black) );
     QFont f( "Helvetica", 8 );
@@ -160,21 +163,6 @@ QPixmap QTBbutton::getIcon( const int number, const int bank ){
                 X+=(fm.ascent()/3)*2+2;
             }
             X=0;
-            /*
-            _param = QString("IA:  %1%2%3%4%5%6%7%8%9%10%11%12")
-                    .arg((state & 0x0001)?"1":"0")
-                    .arg((state>>1 & 0x0001)?"1":"0")
-                    .arg((state>>2 & 0x0001)?"1":"0")
-                    .arg((state>>3 & 0x0001)?"1":"0")
-                    .arg((state>>4 & 0x0001)?"1":"0")
-                    .arg((state>>5 & 0x0001)?"1":"0")
-                    .arg((state>>6 & 0x0001)?"1":"0")
-                    .arg((state>>7 & 0x0001)?"1":"0")
-                    .arg((state>>8 & 0x0001)?"1":"0")
-                    .arg((state>>9 & 0x0001)?"1":"0")
-                    .arg((state>>10& 0x0001)?"1":"0")
-                    .arg((state>>11& 0x0001)?"1":"0"); */
-            //painter.drawText( X, Y, _param );
         }
         break;
     case SSXMSGS::ButtonType::CC_TOGGLE:
@@ -261,14 +249,27 @@ QPixmap QTBbutton::getIcon( const int number, const int bank ){
     default:;
     }
 
-
-    //qCDebug(QTB) << Q_FUNC_INFO << "UPDATED!" << _ButtonType;
     return(pix);
 }
 
 void QTBbutton::update( int bank ){
-    QPixmap pix = QTBbutton::getIcon( m_btnNumber, bank );
+
+    qCDebug(QTB) << Q_FUNC_INFO << "btnNumber=" << m_btnNumber << "bank=" << bank << "blanked=" << m_blanked;
+
+    QPixmap pix;
+    if (m_blanked){
+        pix = QTBbutton::getIcon( m_btnNumber );
+        setDisabled(true);
+    }
+    else {
+        pix = QTBbutton::getIcon( m_btnNumber, bank );
+        setEnabled(true);
+    }
     QIcon icon(pix);
     setIcon( QIcon(pix));
-    //update
+}
+
+void QTBbutton::setBlanked( bool blanked ){
+    qCDebug(QTB) << Q_FUNC_INFO << "btnNumber=" << m_btnNumber << "blanked=" << blanked;
+    m_blanked = blanked;
 }

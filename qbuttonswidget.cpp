@@ -1,5 +1,7 @@
 #include "qbuttonswidget.h"
 #include "qtbbutton.h"
+#include "qmidi/qmidisysexmsgs.h"
+
 #include <QVBoxLayout>
 Q_LOGGING_CATEGORY( BTN, "BTN" )
 
@@ -69,8 +71,23 @@ QButtonsWidget * QButtonsWidget::getInstance(){
 }
 
 void QButtonsWidget::update( int bank ){
+    qCDebug(BTN) << Q_FUNC_INFO << "bank=" << bank;
     for( auto p_btn: m_pBtns ){
         p_btn->update( bank );
+    }
+}
+
+void QButtonsWidget::maskBtns(){
+    int activeBtns = SSXMSGS::g_Model;
+    if ( activeBtns > 100 ) activeBtns-=100;
+    qCDebug(BTN) << Q_FUNC_INFO << "activeBtns=" << activeBtns;
+    int i = 0;
+    for( auto p_btn: m_pBtns ){
+        if ( i < activeBtns )
+            p_btn->setBlanked(false);
+        else
+            p_btn->setBlanked(true);
+        i++;
     }
 }
 
