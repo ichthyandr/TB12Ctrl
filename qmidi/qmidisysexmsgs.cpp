@@ -319,12 +319,12 @@ BankSettings::BankSettings(){
     selectBankAction        = 0;
     selectBankActionProgNum = 0;
 
-    int max_buttons = g_Model;
-    if (max_buttons>100) max_buttons-=100;
+    //int max_buttons = g_Model;
+    /*if (max_buttons>100) max_buttons-=100;*/
 
-    qCDebug(SSX) << Q_FUNC_INFO << "max_buttons=" << max_buttons;
+    //qCDebug(SSX) << Q_FUNC_INFO << "max_buttons=" << max_buttons;
 
-    for (uint8_t i = 0; i < max_buttons; ++i)
+    for (uint8_t i = 0; i < FOOT_BUTTONS_NUM; ++i)
     {
         buttonType[i] = PRESET_CHANGE;//All buttons will preset switchers
         buttonContext[i].presetChangeContext.programsNumbers[0] = i;//preset numbers will match button number;
@@ -1375,6 +1375,8 @@ bool save( QString fileName, QString & error ){
     QJsonObject     root;
 
     root["Model"]   = g_Model;
+    //int max_buttons = g_Model;
+    //if ( max_buttons>100 ) max_buttons-=100;
 
     /// глобальные настройки
     /////////////////////////////////////////////////////////////////
@@ -1442,10 +1444,12 @@ bool save( QString fileName, QString & error ){
         // buttonType
         QJsonArray buttonType;
         for ( int i=0; i<FOOT_BUTTONS_NUM; i++ ) buttonType << bankSets.buttonType[i];
+        /*for ( int i=0; i<max_buttons; i++ ) buttonType << bankSets.buttonType[i];*/
         bank["buttonType"]          = buttonType;
         //buttonContext
         QJsonArray buttonContext;  //контекст всех кнопок
         for ( int i=0; i<FOOT_BUTTONS_NUM; i++ ) {
+        /*for ( int i=0; i<max_buttons; i++ ) {*/
             QJsonObject btnContext; //контекст кнопки
             //relays
             btnContext["relays"]        = bankSets.buttonContext[i].relays;
@@ -1553,79 +1557,83 @@ bool load( QString fileName, QString & error ){
         QJsonObject root = doc.object();
         if (root.value("Model").isUndefined())                  throw( QObject::tr("no key 'Model'") );
         g_Model = static_cast<t_Models>(root.value("Model").toInt());
-        int max_buttons = g_Model;
-        if ( max_buttons>100 ) max_buttons-=100;
+        //int max_buttons = g_Model;
+        //if ( max_buttons>100 ) max_buttons-=100;
         /// GLOBALS
         if (root.value("Globals").isUndefined())                throw( QObject::tr("no key 'Globals'") );
         if ( !root.value("Globals").isObject() )                throw( QObject::tr("bad 'Globals' type") );
         QJsonObject globals = root.value("Globals").toObject();
 
-        if ( globals.value("bnkNum").isUndefined() )            throw( QObject::tr("no key 'bnkNum'") );
-        if ( globals.value("midiChanNum").isUndefined() )       throw( QObject::tr("no key 'midiChanNum'") );
-        if ( globals.value("useBankSelectMess").isUndefined() ) throw( QObject::tr("no key 'useBankSelectMess'") );
-        if ( globals.value("bnkSwOnBoard").isUndefined() )      throw( QObject::tr("no key 'bnkSwOnBoard'") );
-        if ( globals.value("Show_pr_name").isUndefined() )      throw( QObject::tr("no key 'Show_pr_name'") );
-        if ( globals.value("targetDevice").isUndefined() )      throw( QObject::tr("no key 'targetDevice'") );
-        if ( globals.value("usbBaudrate").isUndefined() )       throw( QObject::tr("no key 'usbBaudrate'") );
+        if ( !globals.value("bnkNum").isUndefined() )
+            g_GlobalSettings.bnkNum                 = static_cast<uint8_t>(globals.value("bnkNum").toInt());
+        if ( !globals.value("midiChanNum").isUndefined() )
+            g_GlobalSettings.midiChanNum            = static_cast<uint8_t>(globals.value("midiChanNum").toInt());
+        if ( !globals.value("useBankSelectMess").isUndefined() )
+            g_GlobalSettings.useBankSelectMess      = static_cast<UseBankSelectMess>(globals.value("useBankSelectMess").toInt());
+        if ( !globals.value("bnkSwOnBoard").isUndefined() )
+            g_GlobalSettings.bnkSwOnBoard           = static_cast<ExternalBs2Pedal>(globals.value("bnkSwOnBoard").toInt());
+        if ( !globals.value("Show_pr_name").isUndefined() )
+            g_GlobalSettings.Show_pr_name           = static_cast<ShowPresetBank>(globals.value("Show_pr_name").toInt());
+        if ( !globals.value("targetDevice").isUndefined() )
+            g_GlobalSettings.targetDevice           = static_cast<TargetDevice>(globals.value("targetDevice").toInt());
+        if ( !globals.value("usbBaudrate").isUndefined() )
+            g_GlobalSettings.usbBaudrate            = static_cast<UsbBaudrate>(globals.value("usbBaudrate").toInt());
 
-        g_GlobalSettings.bnkNum                 = static_cast<uint8_t>(globals.value("bnkNum").toInt());
-        g_GlobalSettings.midiChanNum            = static_cast<uint8_t>(globals.value("midiChanNum").toInt());
-        g_GlobalSettings.useBankSelectMess      = static_cast<UseBankSelectMess>(globals.value("useBankSelectMess").toInt());
-        g_GlobalSettings.bnkSwOnBoard           = static_cast<ExternalBs2Pedal>(globals.value("bnkSwOnBoard").toInt());
-        g_GlobalSettings.Show_pr_name           = static_cast<ShowPresetBank>(globals.value("Show_pr_name").toInt());
-        g_GlobalSettings.targetDevice           = static_cast<TargetDevice>(globals.value("targetDevice").toInt());
-        g_GlobalSettings.usbBaudrate            = static_cast<UsbBaudrate>(globals.value("usbBaudrate").toInt());
+        if  ( !globals.value("inputThrough").isUndefined() )
+            if (globals.value("inputThrough").isArray()) {
+                QJsonArray inputThroughArr = globals.value("inputThrough").toArray();
+                if ( inputThroughArr.size() != TOTAL_MIDI_INTERFACES )  throw( QObject::tr("inputThrough has bad size") );
+                for (int i=0; i<TOTAL_MIDI_INTERFACES; i++ ){
+                    g_GlobalSettings.inputThrough[i] = static_cast<InputThrough>( inputThroughArr.at(i).toInt());
+                }
+            }
 
-        if ( globals.value("inputThrough").isUndefined() )      throw( QObject::tr("no key 'inputThrough'") );
-        if ( !globals.value("inputThrough").isArray() )         throw( QObject::tr("bad 'inputThrough' type") );
-        QJsonArray inputThroughArr = globals.value("inputThrough").toArray();
-        if ( inputThroughArr.size() != TOTAL_MIDI_INTERFACES )  throw( QObject::tr("inputThrough has bad size") );
-        for (int i=0; i<TOTAL_MIDI_INTERFACES; i++ ){
-            g_GlobalSettings.inputThrough[i] = static_cast<InputThrough>( inputThroughArr.at(i).toInt());
-        }
+        if ( !globals.value("maxBankNumber").isUndefined() )
+            g_GlobalSettings.maxBankNumber          = static_cast<uint8_t>(globals.value("maxBankNumber").toInt());
+        if ( !globals.value("screenBrightness").isUndefined() )
+            g_GlobalSettings.screenBrightness       = static_cast<uint8_t>(globals.value("screenBrightness").toInt());
+        if ( !globals.value("screenContrast").isUndefined() )
+            g_GlobalSettings.screenContrast         = static_cast<UseBankSelectMess>(globals.value("screenContrast").toInt());
 
-        if ( globals.value("maxBankNumber").isUndefined() )     throw( QObject::tr("no key 'maxBankNumber'") );
-        if ( globals.value("screenBrightness").isUndefined() )  throw( QObject::tr("no key 'screenBrightness'") );
-        if ( globals.value("screenContrast").isUndefined() )    throw( QObject::tr("no key 'screenContrast'") );
+        if ( !globals.value("expPtype").isUndefined() )
+            if ( globals.value("expPtype").isArray() ) {
+                QJsonArray expPtypeArr = globals.value("expPtype").toArray();
+                if ( expPtypeArr.size() != 3 )                          throw( QObject::tr("expPtype has bad size") );
+                for (int i=0; i<3; i++ ){
+                    g_GlobalSettings.expPtype[i] = static_cast<ExpPedalType>( expPtypeArr.at(i).toInt());
+                }
+            }
 
-        g_GlobalSettings.maxBankNumber          = static_cast<uint8_t>(globals.value("maxBankNumber").toInt());
-        g_GlobalSettings.screenBrightness       = static_cast<uint8_t>(globals.value("screenBrightness").toInt());
-        g_GlobalSettings.screenContrast         = static_cast<UseBankSelectMess>(globals.value("screenContrast").toInt());
+        if ( !globals.value("buttonHoldTime").isUndefined() )
+            g_GlobalSettings.buttonHoldTime         = static_cast<HoldTime>(globals.value("buttonHoldTime").toInt());
+        if ( !globals.value("tapDisplayType").isUndefined() )
+            g_GlobalSettings.tapDisplayType         = static_cast<TapDisplayType>(globals.value("tapDisplayType").toInt());
+        if ( !globals.value("tapType").isUndefined() )
+            g_GlobalSettings.tapType                = static_cast<TapType>(globals.value("tapType").toInt());
+        if ( !globals.value("pedalLedView").isUndefined() )
+            g_GlobalSettings.pedalLedView           = static_cast<PedalLedView>(globals.value("pedalLedView").toInt());
+        if ( !globals.value("pedalTunerScheme").isUndefined() )
+            g_GlobalSettings.pedalTunerScheme       = static_cast<PedalTunerScheme>(globals.value("pedalTunerScheme").toInt());
+        if ( !globals.value("pedalBrightness").isUndefined() )
+            g_GlobalSettings.pedalBrightness        = static_cast<uint8_t>(globals.value("pedalBrightness").toInt());
 
-        if ( globals.value("expPtype").isUndefined() )          throw( QObject::tr("no key 'expPtype'") );
-        if ( !globals.value("expPtype").isArray() )             throw( QObject::tr("bad 'expPtype' type") );
-        QJsonArray expPtypeArr = globals.value("expPtype").toArray();
-        if ( expPtypeArr.size() != 3 )                          throw( QObject::tr("expPtype has bad size") );
-        for (int i=0; i<3; i++ ){
-            g_GlobalSettings.expPtype[i] = static_cast<ExpPedalType>( expPtypeArr.at(i).toInt());
-        }
+        if ( !globals.value("pLowPos").isUndefined() )
+            if ( globals.value("pLowPos").isArray() ){
+                QJsonArray pLowPosArr   = globals.value("pLowPos").toArray();
+                if ( pLowPosArr.size() != 3 ) throw( QObject::tr("pLowPos has bad size") );
+                for (int i=0; i<3; i++ ){
+                    g_GlobalSettings.pLowPos[i]     = static_cast<uint8_t>( pLowPosArr.at(i).toInt());
+                }
+            }
 
-        if ( globals.value("buttonHoldTime").isUndefined() )    throw( QObject::tr("no key 'buttonHoldTime'") );
-        if ( globals.value("tapDisplayType").isUndefined() )    throw( QObject::tr("no key 'tapDisplayType'") );
-        if ( globals.value("tapType").isUndefined() )           throw( QObject::tr("no key 'tapType'") );
-        if ( globals.value("pedalLedView").isUndefined() )      throw( QObject::tr("no key 'pedalLedView'") );
-        if ( globals.value("pedalTunerScheme").isUndefined() )  throw( QObject::tr("no key 'pedalTunerScheme'") );
-        if ( globals.value("pedalBrightness").isUndefined() )   throw( QObject::tr("no key 'pedalBrightness'") );
-
-        g_GlobalSettings.buttonHoldTime         = static_cast<HoldTime>(globals.value("buttonHoldTime").toInt());
-        g_GlobalSettings.tapDisplayType         = static_cast<TapDisplayType>(globals.value("tapDisplayType").toInt());
-        g_GlobalSettings.tapType                = static_cast<TapType>(globals.value("tapType").toInt());
-        g_GlobalSettings.bnkSwOnBoard           = static_cast<ExternalBs2Pedal>(globals.value("bnkSwOnBoard").toInt());
-        g_GlobalSettings.Show_pr_name           = static_cast<ShowPresetBank>(globals.value("Show_pr_name").toInt());
-        g_GlobalSettings.targetDevice           = static_cast<TargetDevice>(globals.value("targetDevice").toInt());
-
-        if ( globals.value("pLowPos").isUndefined() )           throw( QObject::tr("no key 'pLowPos'") );
-        if ( globals.value("pHighPos").isUndefined() )          throw( QObject::tr("no key 'pHighPos'") );
-        if ( !globals.value("pLowPos").isArray() )              throw( QObject::tr("bad 'pLowPos' type") );
-        if ( !globals.value("pHighPos").isArray() )             throw( QObject::tr("bad 'pHighPos' type") );
-        QJsonArray pLowPosArr   = globals.value("pLowPos").toArray();
-        QJsonArray pHighPosArr  = globals.value("pHighPos").toArray();
-        if ( pLowPosArr.size() != 3 )                           throw( QObject::tr("pLowPos has bad size") );
-        if ( pHighPosArr.size() != 3 )                          throw( QObject::tr("pHighPos has bad size") );
-        for (int i=0; i<3; i++ ){
-            g_GlobalSettings.pLowPos[i]     = static_cast<uint8_t>( pLowPosArr.at(i).toInt());
-            g_GlobalSettings.pHighPos[i]    = static_cast<uint8_t>( pHighPosArr.at(i).toInt());
-        }
+        if ( !globals.value("pHighPos").isUndefined() )
+            if ( globals.value("pHighPos").isArray() ){
+                QJsonArray pHighPosArr  = globals.value("pHighPos").toArray();
+                if ( pHighPosArr.size() != 3 ) throw( QObject::tr("pHighPos has bad size") );
+                for (int i=0; i<3; i++ ){
+                    g_GlobalSettings.pHighPos[i]    = static_cast<uint8_t>( pHighPosArr.at(i).toInt());
+                }
+            }
 
         /// BANKS SETTINGS
         if ( root.value("banks").isUndefined() )                throw( QObject::tr("no key 'banks'") );
@@ -1641,98 +1649,102 @@ bool load( QString fileName, QString & error ){
 
             BankSettings bankSets;
             // selectBankAction;
-            if (bankSetsObj.value("selectBankAction").isUndefined())
-                                                                throw( QObject::tr("no key 'selectBankAction'") ) ;
-            bankSets.selectBankAction       = static_cast<uint8_t>(bankSetsObj.value("selectBankAction").toInt());
+            if (!bankSetsObj.value("selectBankAction").isUndefined())
+                bankSets.selectBankAction       = static_cast<uint8_t>(bankSetsObj.value("selectBankAction").toInt());
             // selectBankActionProgNum;
-            if (bankSetsObj.value("selectBankActionProgNum").isUndefined())
-                                                                throw( QObject::tr("no key 'selectBankActionProgNum'") ) ;
-            bankSets.selectBankActionProgNum= static_cast<uint8_t>(bankSetsObj.value("selectBankActionProgNum").toInt());
+            if (!bankSetsObj.value("selectBankActionProgNum").isUndefined())
+                bankSets.selectBankActionProgNum= static_cast<uint8_t>(bankSetsObj.value("selectBankActionProgNum").toInt());
             // bankname
-            if (bankSetsObj.value("BankName").isUndefined())    throw( QObject::tr("no key 'BankName'") ) ;
-            if (!bankSetsObj.value("BankName").isString())      throw( QObject::tr("'BankName' is not string") );
-            QString BankName = bankSetsObj.value("BankName").toString();
-            ::memset( bankSets.BankName, 0, BANK_NAME_NMAX_SIZE );
-            ::strcpy_s( bankSets.BankName, BANK_NAME_NMAX_SIZE, BankName.toStdString().c_str());
+            if (!bankSetsObj.value("BankName").isUndefined())
+                if (bankSetsObj.value("BankName").isString()) {
+                    QString BankName = bankSetsObj.value("BankName").toString();
+                    ::memset( bankSets.BankName, 0, BANK_NAME_NMAX_SIZE );
+                    ::strcpy_s( bankSets.BankName, BANK_NAME_NMAX_SIZE, BankName.toStdString().c_str());
+                }
             // tapCc
-            if (bankSetsObj.value("tapCc").isUndefined())       throw( QObject::tr("no key 'tapCc'") ) ;
-            bankSets.tapCc          = static_cast<uint8_t>(bankSetsObj.value("tapCc").toInt());
+            if (!bankSetsObj.value("tapCc").isUndefined())
+                bankSets.tapCc          = static_cast<uint8_t>(bankSetsObj.value("tapCc").toInt());
             // tunerCc
-            if (bankSetsObj.value("tunerCc").isUndefined())     throw( QObject::tr("no key 'tunerCc'") ) ;
-            bankSets.tunerCc        = static_cast<uint8_t>(bankSetsObj.value("tunerCc").toInt());
+            if (!bankSetsObj.value("tunerCc").isUndefined())
+                bankSets.tunerCc        = static_cast<uint8_t>(bankSetsObj.value("tunerCc").toInt());
             // pedalsCc
-            if (bankSetsObj.value("pedalsCc").isUndefined())    throw( QObject::tr("no key 'pedalsCc'") ) ;
-            if (!bankSetsObj.value("pedalsCc").isArray())       throw( QObject::tr("bad type 'pedalsCc'") ) ;
-            QJsonArray pedalsCcArr  = bankSetsObj.value("pedalsCc").toArray();
-            if ( pedalsCcArr.size() !=4  )                      throw( QObject::tr("bad size 'pedalsCc'") );
-            for ( int i=0; i<4; i++ ){
-                bankSets.pedalsCc[i]    = static_cast<uint8_t>( pedalsCcArr.at(i).toInt());
-            }
+            if (!bankSetsObj.value("pedalsCc").isUndefined())
+                if (bankSetsObj.value("pedalsCc").isArray()){
+                    QJsonArray pedalsCcArr  = bankSetsObj.value("pedalsCc").toArray();
+                    if ( pedalsCcArr.size() !=4  )                      throw( QObject::tr("bad size 'pedalsCc'") );
+                    for ( int i=0; i<4; i++ ){
+                        bankSets.pedalsCc[i]    = static_cast<uint8_t>( pedalsCcArr.at(i).toInt());
+                    }
+                }
             // buttonType
-            if (bankSetsObj.value("buttonType").isUndefined())  throw( QObject::tr("no key 'buttonType'") ) ;
-            if (!bankSetsObj.value("buttonType").isArray())     throw( QObject::tr("bad type 'buttonType'") ) ;
-            QJsonArray buttonTypeArr    = bankSetsObj.value("buttonType").toArray();
-            if ( buttonTypeArr.size() !=FOOT_BUTTONS_NUM  )     throw( QObject::tr("bad size 'buttonType'") );
-            for ( int i=0; i<FOOT_BUTTONS_NUM; i++ ){
-                bankSets.buttonType[i]  = static_cast<ButtonType>( buttonTypeArr.at(i).toInt());
-            }
+            if (!bankSetsObj.value("buttonType").isUndefined())
+                if (bankSetsObj.value("buttonType").isArray()){
+                    QJsonArray buttonTypeArr    = bankSetsObj.value("buttonType").toArray();
+                    if ( buttonTypeArr.size() !=FOOT_BUTTONS_NUM  )     throw( QObject::tr("bad size 'buttonType'") );
+                    for ( int i=0; i<FOOT_BUTTONS_NUM; i++ ){
+                        bankSets.buttonType[i]  = static_cast<ButtonType>( buttonTypeArr.at(i).toInt());
+                    }
+                }
             // buttonContext
             if (bankSetsObj.value("buttonContext").isUndefined())   throw( QObject::tr("no key 'buttonContext'") ) ;
             if (!bankSetsObj.value("buttonContext").isArray())      throw( QObject::tr("bad type 'buttonContext'") ) ;
             QJsonArray buttonContextArr = bankSetsObj.value("buttonContext").toArray();
-            if ( buttonContextArr.size()!=FOOT_BUTTONS_NUM  )       throw( QObject::tr("bad size 'buttonContex'") );
-            for (int btnNum=0; btnNum<FOOT_BUTTONS_NUM; btnNum++ ){
-                if (!buttonContextArr.at(btnNum).isObject())        throw (QObject::tr("buttonContex elem isnot object"));
+            if ( buttonContextArr.size()!=FOOT_BUTTONS_NUM )       throw( QObject::tr("bad size 'buttonContex'") );
+            for (int btnNum=0; btnNum < FOOT_BUTTONS_NUM; btnNum++ ){
+                if (!buttonContextArr.at(btnNum).isObject()) throw (QObject::tr("buttonContex elem isnot object"));
                 QJsonObject btnCntxObj = buttonContextArr.at(btnNum).toObject();
                 //relays
-                if (btnCntxObj.value("relays").isUndefined())       throw (QObject::tr("buttonContex elem no 'relays' key"));
-                bankSets.buttonContext[btnNum].relays   = static_cast<uint8_t>(btnCntxObj.value("relays").toInt());
+                if (!btnCntxObj.value("relays").isUndefined())
+                    bankSets.buttonContext[btnNum].relays   = static_cast<uint8_t>(btnCntxObj.value("relays").toInt());
                 //nameAlias
-                if (btnCntxObj.value("nameAlias").isUndefined())    throw (QObject::tr("no 'nameAlias' key in buttonContex elem "));
-                if (!btnCntxObj.value("nameAlias").isString())      throw (QObject::tr("'nameAlias' buttonContex elem is not string"));
-                QString nameAlias = btnCntxObj.value("nameAlias").toString();
-                ::memset( bankSets.buttonContext[btnNum].nameAlias, 0, BUTTON_NAME_MAX_SIZE );
-                ::strcpy_s( bankSets.buttonContext[btnNum].nameAlias, BUTTON_NAME_MAX_SIZE, nameAlias.toStdString().c_str());
+                if (!btnCntxObj.value("nameAlias").isUndefined())
+                    if (btnCntxObj.value("nameAlias").isString()){
+                        QString nameAlias = btnCntxObj.value("nameAlias").toString();
+                        ::memset( bankSets.buttonContext[btnNum].nameAlias, 0, BUTTON_NAME_MAX_SIZE );
+                        ::strcpy_s( bankSets.buttonContext[btnNum].nameAlias, BUTTON_NAME_MAX_SIZE, nameAlias.toStdString().c_str());
+                    }
                 //bankNumber
-                if (btnCntxObj.value("bankNumber").isUndefined())   throw (QObject::tr("buttonContex elem no 'bankNumber' key"));
-                bankSets.buttonContext[btnNum].bankNumber = static_cast<uint8_t>(btnCntxObj.value("bankNumber").toInt());
+                if (!btnCntxObj.value("bankNumber").isUndefined())
+                    bankSets.buttonContext[btnNum].bankNumber = static_cast<uint8_t>(btnCntxObj.value("bankNumber").toInt());
                 //presetChangeContext
                 if (btnCntxObj.value("presetChangeContext").isUndefined())  throw (QObject::tr("buttonContex elem no 'presetChangeContext' key"));
                 if (!btnCntxObj.value("presetChangeContext").isObject())    throw (QObject::tr("'presetChangeContext' buttonContex elem isnt Object"));
                 QJsonObject presetChangeContextObj = btnCntxObj.value("presetChangeContext").toObject();
                 {
                     //midiChannelNumbers
-                    if (presetChangeContextObj.value("midiChannelNumbers").isUndefined())       throw (QObject::tr("no key 'midiChannelNumbers' in presetChangeContext"));
-                    if (!presetChangeContextObj.value("midiChannelNumbers").isArray())          throw (QObject::tr("'midiChannelNumbers' is not Array"));
-                    QJsonArray midiChannelNumbersArr = presetChangeContextObj.value("midiChannelNumbers").toArray();
-                    if ( midiChannelNumbersArr.size() != MAX_PROGRAMS_TO_SEND )                 throw (QObject::tr("'midiChannelNumbers' bad size"));
-                    for( int i=0; i<MAX_PROGRAMS_TO_SEND; i++ ){
-                        bankSets.buttonContext[btnNum].presetChangeContext.midiChannelNumbers[i] =
-                                static_cast<uint8_t>(midiChannelNumbersArr.at(i).toInt());
-                    }
+                    if (!presetChangeContextObj.value("midiChannelNumbers").isUndefined())
+                        if (presetChangeContextObj.value("midiChannelNumbers").isArray()){
+                            QJsonArray midiChannelNumbersArr = presetChangeContextObj.value("midiChannelNumbers").toArray();
+                            if ( midiChannelNumbersArr.size() != MAX_PROGRAMS_TO_SEND ) throw (QObject::tr("'midiChannelNumbers' bad size"));
+                            for( int i=0; i<MAX_PROGRAMS_TO_SEND; i++ ){
+                                bankSets.buttonContext[btnNum].presetChangeContext.midiChannelNumbers[i] =
+                                        static_cast<uint8_t>(midiChannelNumbersArr.at(i).toInt());
+                            }
+                        }
                     //programsNumbers
-                    if (presetChangeContextObj.value("programsNumbers").isUndefined())          throw (QObject::tr("no key 'programsNumbers' in presetChangeContext"));
-                    if (!presetChangeContextObj.value("programsNumbers").isArray())             throw (QObject::tr("'programsNumbers' is not Array"));
-                    QJsonArray programsNumbersArr = presetChangeContextObj.value("programsNumbers").toArray();
-                    if ( programsNumbersArr.size() != MAX_PROGRAMS_TO_SEND )                    throw (QObject::tr("'programsNumbers' bad size"));
-                    for( int i=0; i<MAX_PROGRAMS_TO_SEND; i++ ){
-                        bankSets.buttonContext[btnNum].presetChangeContext.programsNumbers[i] =
-                                static_cast<uint16_t>(programsNumbersArr.at(i).toInt());
-                    }
+                    if (!presetChangeContextObj.value("programsNumbers").isUndefined())
+                        if (presetChangeContextObj.value("programsNumbers").isArray()){
+                            QJsonArray programsNumbersArr = presetChangeContextObj.value("programsNumbers").toArray();
+                            if ( programsNumbersArr.size() != MAX_PROGRAMS_TO_SEND ) throw (QObject::tr("'programsNumbers' bad size"));
+                            for( int i=0; i<MAX_PROGRAMS_TO_SEND; i++ ){
+                                bankSets.buttonContext[btnNum].presetChangeContext.programsNumbers[i] =
+                                        static_cast<uint16_t>(programsNumbersArr.at(i).toInt());
+                            }
+                        }
                     //banksNumbers
-                    if (presetChangeContextObj.value("banksNumbers").isUndefined())             throw (QObject::tr("no key 'banksNumbers' in presetChangeContext"));
-                    if (!presetChangeContextObj.value("banksNumbers").isArray())                throw (QObject::tr("'banksNumbers' is not Array"));
-                    QJsonArray banksNumbersArr = presetChangeContextObj.value("banksNumbers").toArray();
-                    if ( banksNumbersArr.size() != MAX_PROGRAMS_TO_SEND )                       throw (QObject::tr("'banksNumbers' bad size"));
-                    for( int i=0; i<MAX_PROGRAMS_TO_SEND; i++ ){
-                        bankSets.buttonContext[btnNum].presetChangeContext.banksNumbers[i] =
-                                static_cast<uint8_t>(banksNumbersArr.at(i).toInt());
-                    }
+                    if (!presetChangeContextObj.value("banksNumbers").isUndefined())
+                        if (presetChangeContextObj.value("banksNumbers").isArray()){
+                            QJsonArray banksNumbersArr = presetChangeContextObj.value("banksNumbers").toArray();
+                            if ( banksNumbersArr.size() != MAX_PROGRAMS_TO_SEND ) throw (QObject::tr("'banksNumbers' bad size"));
+                            for( int i=0; i<MAX_PROGRAMS_TO_SEND; i++ ){
+                                bankSets.buttonContext[btnNum].presetChangeContext.banksNumbers[i] =
+                                        static_cast<uint8_t>(banksNumbersArr.at(i).toInt());
+                            }
+                        }
                     //iaState
-                    if (presetChangeContextObj.value("iaState").isUndefined())                  throw (QObject::tr("no key 'iaState' in presetChangeContext"));
-                    bankSets.buttonContext[btnNum].presetChangeContext.iaState =
-                            static_cast<uint16_t>(presetChangeContextObj.value("iaState").toInt());
-
+                    if (!presetChangeContextObj.value("iaState").isUndefined())
+                        bankSets.buttonContext[btnNum].presetChangeContext.iaState =
+                                static_cast<uint16_t>(presetChangeContextObj.value("iaState").toInt());
                 }
                 //commonContext
                 if (btnCntxObj.value("commonContext").isUndefined())  throw (QObject::tr("buttonContex elem no 'commonContext' key"));
@@ -1744,52 +1756,44 @@ bool load( QString fileName, QString & error ){
                 QJsonObject contolAndNrpnChangeContextObj = commonContextObj.value("contolAndNrpnChangeContext").toObject();
                 {
                     //autoSendState
-                    if (contolAndNrpnChangeContextObj.value("autoSendState").isUndefined())
-                        throw (QObject::tr("no 'autoSendState' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.autoSendState =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("autoSendState").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("autoSendState").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.autoSendState =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("autoSendState").toInt());
 
                     //ctrlLsbNumber
-                    if (contolAndNrpnChangeContextObj.value("ctrlLsbNumber").isUndefined())
-                        throw (QObject::tr("no 'ctrlLsbNumber' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.ctrlLsbNumber =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("ctrlLsbNumber").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("ctrlLsbNumber").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.ctrlLsbNumber =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("ctrlLsbNumber").toInt());
 
                     //ctrlMsbFreezeNumber
-                    if (contolAndNrpnChangeContextObj.value("ctrlMsbFreezeNumber").isUndefined())
-                        throw (QObject::tr("no 'ctrlMsbFreezeNumber' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.ctrlMsbFreezeNumber =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("ctrlMsbFreezeNumber").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("ctrlMsbFreezeNumber").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.ctrlMsbFreezeNumber =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("ctrlMsbFreezeNumber").toInt());
 
                     //paramLsbOffValue
-                    if (contolAndNrpnChangeContextObj.value("paramLsbOffValue").isUndefined())
-                        throw (QObject::tr("no 'paramLsbOffValue' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramLsbOffValue =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramLsbOffValue").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("paramLsbOffValue").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramLsbOffValue =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramLsbOffValue").toInt());
 
                     //paramLsbOnValue
-                    if (contolAndNrpnChangeContextObj.value("paramLsbOnValue").isUndefined())
-                        throw (QObject::tr("no 'paramLsbOnValue' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramLsbOnValue =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramLsbOnValue").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("paramLsbOnValue").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramLsbOnValue =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramLsbOnValue").toInt());
 
                     //paramMsbOffValue
-                    if (contolAndNrpnChangeContextObj.value("paramMsbOffValue").isUndefined())
-                        throw (QObject::tr("no 'paramMsbOffValue' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramMsbOffValue =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramMsbOffValue").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("paramMsbOffValue").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramMsbOffValue =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramMsbOffValue").toInt());
 
                     //paramMsbOnValue
-                    if (contolAndNrpnChangeContextObj.value("paramMsbOnValue").isUndefined())
-                        throw (QObject::tr("no 'paramMsbOnValue' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramMsbOnValue =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramMsbOnValue").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("paramMsbOnValue").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.paramMsbOnValue =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("paramMsbOnValue").toInt());
 
                     //vendorBlockId
-                    if (contolAndNrpnChangeContextObj.value("vendorBlockId").isUndefined())
-                        throw (QObject::tr("no 'vendorBlockId' key in contolAndNrpnChangeContext"));
-                    bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.vendorBlockId =
-                            static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("vendorBlockId").toInt());
+                    if (!contolAndNrpnChangeContextObj.value("vendorBlockId").isUndefined())
+                        bankSets.buttonContext[btnNum].commonContext.contolAndNrpnChangeContext_.vendorBlockId =
+                                static_cast<uint8_t>(contolAndNrpnChangeContextObj.value("vendorBlockId").toInt());
                 }
             }
             ////// if all ok, add it to g_BanksSettings

@@ -135,23 +135,48 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
     ///--------------------- models actions ----------------------
     connect( tb5Act,  &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_5_MKII;
-        home->reset();
+        //home->reset();
+        /*
+        QButtonsWidget::getInstance()->maskBtns();
+        QButtonsWidget::getInstance()->update(0);
+        */
+        QHomeWidget::getInstance()->_loadNames();
     });
     connect( tb8Act,  &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_8_MKII;
-        home->reset();
+        //home->reset();
+        /*
+        QButtonsWidget::getInstance()->maskBtns();
+        QButtonsWidget::getInstance()->update(0);
+        */
+        QHomeWidget::getInstance()->_loadNames();
     });
     connect( tb12Act, &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_12_MKII;
-        home->reset();
+        //home->reset();
+        /*
+        QButtonsWidget::getInstance()->maskBtns();
+        QButtonsWidget::getInstance()->update(0);
+        */
+        QHomeWidget::getInstance()->_loadNames();
     });
     connect( tb6pAct, &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_6P_MKII;
-        home->reset();
+        //home->reset();
+        /*
+        QButtonsWidget::getInstance()->maskBtns();
+        QButtonsWidget::getInstance()->update(0);
+        */
+        QHomeWidget::getInstance()->_loadNames();
     });
     connect( tb11pAct,&QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_11P_MKII;
-        home->reset();
+        //home->reset();
+        /*
+        QButtonsWidget::getInstance()->maskBtns();
+        QButtonsWidget::getInstance()->update(0);
+        */
+        QHomeWidget::getInstance()->_loadNames();
     });
 }
 

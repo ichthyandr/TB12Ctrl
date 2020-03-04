@@ -8,9 +8,11 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QStyleFactory>
+#include <QStandardPaths>
+#include <QDebug>
 #include "qmidi/qmidisysexmsgs.h"
 
-static QFile    g_logFile("TB12Ctrl.log");
+static QFile    g_logFile(QStandardPaths::locate(QStandardPaths::TempLocation, QString(), QStandardPaths::LocateDirectory)+"TB12Ctrl.log");
 static QMutex   g_mutex;
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
@@ -50,6 +52,9 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 int main(int argc, char *argv[]){
     g_logFile.open(QIODevice::WriteOnly | QIODevice::Append);
     qInstallMessageHandler(myMessageOutput);
+
+    //QString tmpLocation = QStandardPaths::locate(QStandardPaths::TempLocation, QString(), QStandardPaths::LocateDirectory);
+    //qDebug() << tmpLocation;
 
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #if 0

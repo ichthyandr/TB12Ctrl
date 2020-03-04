@@ -58,8 +58,8 @@ typedef enum {
     TB_8_MKII       = 8,
     TB_12_MKII      = 12,
     // models with pedals
-    TB_6P_MKII      = 105,  // number buttons - 100
-    TB_11P_MKII     = 110,
+    TB_6P_MKII      = 106,  // number buttons - 100
+    TB_11P_MKII     = 111,
 } t_Models;
 
 /// global decloration g_Model

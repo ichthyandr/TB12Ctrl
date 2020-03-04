@@ -66,7 +66,6 @@ public slots:
     /// слот отслеживания изменений
     ///\param number[in] - номер измененного банка или -1 если изменены globals
     void _changed( int number );
-private slots:
     /// загрузить имена банков в комбо
     void _loadNames();
 };
