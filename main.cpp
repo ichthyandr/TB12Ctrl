@@ -12,7 +12,7 @@
 #include <QDebug>
 #include "qmidi/qmidisysexmsgs.h"
 
-static QFile    g_logFile(QStandardPaths::locate(QStandardPaths::TempLocation, QString(), QStandardPaths::LocateDirectory)+"TB12Ctrl.log");
+static QFile    g_logFile(QStandardPaths::locate(QStandardPaths::TempLocation, QString(), QStandardPaths::LocateDirectory)+"TBAccess.log");
 static QMutex   g_mutex;
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
 
     QApplication a(argc, argv);
 
-    QLockFile lockFile(QDir::temp().absoluteFilePath(QString::fromUtf8("TB12Ctrl.lock")));
+    QLockFile lockFile(QDir::temp().absoluteFilePath(QString::fromUtf8("TBAccess.lock")));
     /* Trying to close the Lock File, if the attempt is unsuccessful for 100 milliseconds,
         * then there is a Lock File already created by another process.
         / Therefore, we throw a warning and close the program

@@ -29,9 +29,11 @@ QCmnSetupWidget::QCmnSetupWidget(QWidget *parent) : QWidget(parent){
 
     auto gb1 = new QGroupBox(tr("CC# for current bank"));
     auto gb2 = new QGroupBox(tr("Behavior (common for all banks)"));
+    auto gb3 = new QGroupBox(tr("Bank select action"));
 
     grid->addWidget( gb1, 0, 0);
     grid->addWidget( gb2, 0, 1);
+    grid->addWidget( gb3, 1, 0);
 
     //CC# for current bank
     auto vb1    = new QVBoxLayout();
@@ -121,7 +123,7 @@ QCmnSetupWidget::QCmnSetupWidget(QWidget *parent) : QWidget(parent){
                 lbl15->setDisabled(true);
                 sb15->setDisabled(true);
                 sb15->setValue( 0 );
-                SSXMSGS::g_BanksSettings[m_curBnkNumber].pedalsCc[3] = 128;
+                SSXMSGS::g_BanksSettings[m_curBnkNumber].tunerCc = 128;
             }
             emit s_changed(m_curBnkNumber);
             m_proceed = true;
@@ -270,6 +272,9 @@ QCmnSetupWidget::QCmnSetupWidget(QWidget *parent) : QWidget(parent){
                 qCCritical(CMN) << Q_FUNC_INFO << "can't convert data for 'Onboard pedal tuner type'";
         }
     });
+    // для модели без педали запрещены
+    lbl24->setDisabled( SSXMSGS::g_Model < 100 );
+    cbx24->setDisabled( SSXMSGS::g_Model < 100 );
 
     auto lbl25  = new QLabel(tr("Tap message type"));
     auto cbx25  = new QComboBox();
@@ -323,6 +328,7 @@ QCmnSetupWidget::QCmnSetupWidget(QWidget *parent) : QWidget(parent){
         }
     });
 
+    m_labels << lbl21 << lbl22 << lbl23 << lbl24 << lbl25 << lbl26;
     m_combos << cbx21 << cbx22 << cbx23 << cbx24 << cbx25 << cbx26;
 
     grid2->addWidget( lbl21,    0, 0, Qt::AlignRight);
@@ -342,6 +348,55 @@ QCmnSetupWidget::QCmnSetupWidget(QWidget *parent) : QWidget(parent){
 
     grid2->addWidget( lbl26,    5, 0, Qt::AlignRight);
     grid2->addWidget( cbx26,    5, 1, Qt::AlignLeft);
+
+    //Bank select action
+    auto vb3    = new QVBoxLayout();
+    auto grid3  = new QGridLayout();
+
+    gb3->setLayout( vb3 );
+    vb3->addLayout( grid3 );
+    vb3->addStretch(1000);
+
+    auto lbl30 = new QLabel(" ");
+
+    auto chb31  = new QCheckBox(tr("Send PC"));
+    auto lbl31  = new QLabel(tr("Preset #"));
+    auto sb31   = new QSpinBox(); sb31->setRange(1, 128); sb31->setWrapping(true);
+
+    connect(chb31, QOverload<int>::of(&QCheckBox::stateChanged), [=](int state){
+        qCDebug(CMN) << Q_FUNC_INFO << "state=" << state << "m_proceed=" << m_proceed;
+        if ( m_proceed ){
+            m_proceed = false;
+            if ( Qt::Unchecked == state ){
+                SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankAction = 0;
+            }
+            else if ( Qt::Checked == state ){
+                SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankAction = 1;
+            }
+            emit s_changed(m_curBnkNumber);
+            m_proceed = true;
+        }
+    });
+    connect(sb31, QOverload<int>::of(&QSpinBox::valueChanged),[=](int value){
+        if ( m_proceed ){
+            SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankActionProgNum = static_cast<uint8_t>(value-1);
+            emit s_changed(m_curBnkNumber);
+        }
+    });
+
+
+    grid3->addWidget( lbl30,    0, 0, Qt::AlignRight);
+    grid3->addWidget( lbl30,    0, 1, Qt::AlignRight);
+
+    grid3->addWidget( lbl31,    0, 2, Qt::AlignRight);
+    grid3->addWidget( sb31,     0, 3, Qt::AlignLeft);
+    grid3->addWidget( chb31,    0, 4, Qt::AlignLeft);
+/*
+    m_spins  << sb11  << sb12  << sb13  << sb14  << sb15  << sb16;
+    m_checks << chb14 << chb15 << chb16;
+*/
+    m_spins     << sb31;
+    m_checks    << chb31;
 
     updateData( 0 ); // set up first bank by default
 }
@@ -371,7 +426,6 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     if ( data > 127 ) {
         data = 0;
         SSXMSGS::g_BanksSettings[m_curBnkNumber].pedalsCc[0] = 0;
-        //emit s_changed(m_curBnkNumber);
     }
     sb11->setValue(data);
 
@@ -383,13 +437,13 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     if ( data > 127 ) {
         data = 0;
         SSXMSGS::g_BanksSettings[m_curBnkNumber].pedalsCc[1] = 0;
-        //emit s_changed(m_curBnkNumber);
     }
     sb12->setValue(data);
 
     //Onboard exp. pedal CC#
-    //sb13
+    //lb13 sb13
     //BankSettings.pedalsCc[2];
+    auto lb13 = m_labels.at(2);
     auto sb13 = m_spins.at(2);
     data = SSXMSGS::g_BanksSettings.at(m_curBnkNumber).pedalsCc[2];
     if ( data > 127 ) {
@@ -398,6 +452,9 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
         //emit s_changed(m_curBnkNumber);
     }
     sb13->setValue(data);
+    // для моделей без педали запрещены
+    lb13->setDisabled( SSXMSGS::g_Model < 100 );
+    sb13->setDisabled( SSXMSGS::g_Model < 100 );
 
     // lbl14  = new QLabel(tr("Onboard exp. pedal alt. CC#"));
     // sb14 chb14
@@ -405,19 +462,31 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     auto lbl14  = m_labels.at(3);
     auto sb14   = m_spins.at(3);
     auto chb14  = m_checks.at(0);
+
+    // для моделей без педали запрещены
+    lbl14->setDisabled( SSXMSGS::g_Model < 100 );
+    sb14->setDisabled( SSXMSGS::g_Model < 100 );
+    chb14->setDisabled( SSXMSGS::g_Model < 100 );
+
     data = SSXMSGS::g_BanksSettings.at(m_curBnkNumber).pedalsCc[3];
     if ( data > 127 ){
         SSXMSGS::g_BanksSettings[m_curBnkNumber].pedalsCc[3] = 128;
-        //emit s_changed(m_curBnkNumber);
-        lbl14->setDisabled(true);
-        sb14->setValue(0); sb14->setDisabled(true);
+        sb14->setValue(0);
+        if ( SSXMSGS::g_Model > 100 ) {
+            lbl14->setDisabled(true);
+            sb14->setDisabled(true);
+        }
         chb14->setCheckState(Qt::Checked);
     }
     else{
-        lbl14->setEnabled(true);
-        sb14->setValue(data); sb14->setEnabled(true);
+        sb14->setValue(data);
+        if ( SSXMSGS::g_Model > 100 ){
+            lbl14->setEnabled(true);
+            sb14->setEnabled(true);
+        }
         chb14->setCheckState(Qt::Unchecked);
     }
+
 
     // auto lbl15  = new QLabel(tr("Tuner CC#"));
     // sb15 chb15
@@ -428,7 +497,6 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     data = SSXMSGS::g_BanksSettings.at(m_curBnkNumber).tunerCc;
     if ( data > 127 ){
         SSXMSGS::g_BanksSettings[m_curBnkNumber].tunerCc = 128;
-        //emit s_changed(m_curBnkNumber);
         lbl15->setDisabled(true);
         sb15->setValue(0); sb15->setDisabled(true);
         chb15->setCheckState(Qt::Checked);
@@ -448,7 +516,6 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     data = SSXMSGS::g_BanksSettings.at(m_curBnkNumber).tapCc;
     if ( data > 127 ){
         SSXMSGS::g_BanksSettings[m_curBnkNumber].tapCc = 128;
-        //emit s_changed(m_curBnkNumber);
         lbl16->setDisabled(true);
         sb16->setValue(0); sb16->setDisabled(true);
         chb16->setCheckState(Qt::Checked);
@@ -473,7 +540,6 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
         data = var.toInt(&ok);
         if ( ok ){
             SSXMSGS::g_GlobalSettings.expPtype[0] = static_cast<SSXMSGS::ExpPedalType>(data);
-            //emit s_changed(-1);
         }
         else
             qCCritical(CMN) << Q_FUNC_INFO << "can't convert data for 'Exp. pedal 1 type'";
@@ -495,7 +561,6 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
         data = var.toInt(&ok);
         if ( ok ){
             SSXMSGS::g_GlobalSettings.expPtype[1] = static_cast<SSXMSGS::ExpPedalType>(data);
-            //emit s_changed(-1);
         }
         else
             qCCritical(CMN) << Q_FUNC_INFO << "can't convert data for 'Exp. pedal 2 type'";
@@ -506,6 +571,7 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     // Onboard pedal LEDs view
     // cbx23
     // GlobalSettings.pedalLedView
+    auto lbl23 = m_labels.at(8);
     auto cbx23 = m_combos.at(2);
     data = SSXMSGS::g_GlobalSettings.pedalLedView;
     id = cbx23->findData(QVariant(data));
@@ -525,9 +591,14 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     else
         cbx23->setCurrentIndex(id);
 
+    // для модели без педали запрещены
+    lbl23->setDisabled( SSXMSGS::g_Model < 100 );
+    cbx23->setDisabled( SSXMSGS::g_Model < 100 );
+
     // Onboard pedal tuner type
     // cbx24
     // SSXMSGS::PedalTunerScheme
+    auto lbl24 = m_labels.at(9);
     auto cbx24 = m_combos.at(3);
     data = SSXMSGS::g_GlobalSettings.pedalTunerScheme;
     id = cbx24->findData(QVariant(data));
@@ -546,6 +617,9 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     }
     else
         cbx24->setCurrentIndex(id);
+    // для модели без педали запрещены
+    lbl24->setDisabled( SSXMSGS::g_Model < 100 );
+    cbx24->setDisabled( SSXMSGS::g_Model < 100 );
 
     // Tap message type
     // cbx25
@@ -590,6 +664,25 @@ void QCmnSetupWidget::updateData( int curBnkNumber ){
     }
     else
         cbx26->setCurrentIndex(id);
+
+    // auto chb31  = new QCheckBox(tr("Send PC"));
+    // auto lbl31  = new QLabel(tr("Preset #"));
+    // auto sb31   = new QSpinBox(); sb31->setRange(1, 128); sb31->setWrapping(true);
+
+    auto chb31  = m_checks.at(3);
+    auto sb31   = m_spins.at(6);
+
+    if ( SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankAction > 0){
+        chb31->setChecked(true);
+        SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankAction = 1;
+    }
+    else {
+        chb31->setChecked(false);
+    }
+
+    if ( SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankActionProgNum > 127)
+        SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankActionProgNum = 127;
+    sb31->setValue( SSXMSGS::g_BanksSettings[m_curBnkNumber].selectBankActionProgNum + 1 );
 
     m_proceed = true;
 }

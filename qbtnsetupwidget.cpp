@@ -5,6 +5,7 @@
 #include <QStackedLayout>
 #include <QPushButton>
 #include <QVariant>
+#include <QLineEdit>
 
 #include "qhomewidget.h"
 #include "qbtnsetupwidget.h"
@@ -26,6 +27,7 @@ Q_LOGGING_CATEGORY( BSW, "BSW" )
 static const QString _sl            = QString("BswStackedLayout");
 static const QString _bsGroupBox    = QString("BswGroupBox");
 static const QString _typeCombo     = QString("BswComboBox");
+static const QString _aliasEdt      = QString("BswAliasEdt");
 
 QBtnSetupWidget::QBtnSetupWidget(QWidget *parent) : QWidget(parent){
     qCDebug(BSW) << Q_FUNC_INFO;
@@ -48,8 +50,32 @@ QBtnSetupWidget::QBtnSetupWidget(QWidget *parent) : QWidget(parent){
     auto typeCombo = new QComboBox();
     typeCombo->setObjectName(_typeCombo);
 
-    hb1->addWidget(typeLabel, 0, Qt::AlignLeft);
-    hb1->addWidget(typeCombo, 0, Qt::AlignLeft);
+    auto aliasLbl = new QLabel(tr("Alias Name:"));
+    auto aliasEdt = new QLineEdit();
+    aliasEdt->setMaxLength(BUTTON_NAME_MAX_SIZE);
+    aliasEdt->setFixedWidth(160);
+    QRegExp rx("^[a-zA-Z0-9\\s\\-_]*$");
+    auto validator = new QRegExpValidator(rx, this);
+    aliasEdt->setValidator(validator);
+
+    char aliasBuff[BUTTON_NAME_MAX_SIZE+1];
+    ::memset(aliasBuff, 0, BUTTON_NAME_MAX_SIZE+1);
+    ::memcpy(aliasBuff, SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].nameAlias, BUTTON_NAME_MAX_SIZE);
+    aliasEdt->setObjectName( _aliasEdt );
+
+    connect(aliasEdt, QOverload<const QString&>::of(&QLineEdit::textEdited), [=](const QString & text ){
+        if (m_bProceed) {
+            ::memset( SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].nameAlias, 0, BUTTON_NAME_MAX_SIZE);
+            ::memcpy( SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].nameAlias, text.toStdString().c_str(), BUTTON_NAME_MAX_SIZE );
+            emit s_changed(m_curBnkNumber);
+        }
+    });
+
+    hb1->addWidget(typeLabel,   0, Qt::AlignLeft);
+    hb1->addWidget(typeCombo,   0, Qt::AlignLeft);
+    hb1->addSpacing(10);
+    hb1->addWidget(aliasLbl,    0, Qt::AlignLeft);
+    hb1->addWidget(aliasEdt,    0, Qt::AlignLeft);
     hb1->addStretch(1000);
 
     typeCombo->addItem(tr("Preset Change"),                 QVariant(SSXMSGS::ButtonType::PRESET_CHANGE));
@@ -192,6 +218,7 @@ void QBtnSetupWidget::setButton(int btnNumber, int curBnkNumber){
 
     auto bsGroupBox = findChild<QGroupBox*>(_bsGroupBox);
     auto typeCombo  = findChild<QComboBox*>(_typeCombo);
+    auto aliasEdt   = findChild<QLineEdit*>(_aliasEdt);
 
     if ( Q_NULLPTR == bsGroupBox ){
         qCCritical(BSW) << Q_FUNC_INFO << "can't find group box!!";
@@ -199,6 +226,10 @@ void QBtnSetupWidget::setButton(int btnNumber, int curBnkNumber){
     }
     if ( Q_NULLPTR == typeCombo ){
         qCCritical(BSW) << Q_FUNC_INFO << "can't find combo box!!";
+        return;
+    }
+    if ( Q_NULLPTR == aliasEdt ){
+        qCCritical(BSW) << Q_FUNC_INFO << "can't find edit!!";
         return;
     }
     QString title = QString(tr("Button %1 settings")).arg(m_btnNumber);
@@ -211,6 +242,10 @@ void QBtnSetupWidget::setButton(int btnNumber, int curBnkNumber){
 
     typeCombo->setCurrentIndex(-1);
     typeCombo->setCurrentIndex(index);
+
+    char aliasBuff[BUTTON_NAME_MAX_SIZE+1];
+    ::memset(aliasBuff, 0, BUTTON_NAME_MAX_SIZE+1);
+    ::memcpy(aliasBuff, SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].nameAlias, BUTTON_NAME_MAX_SIZE);
 
     m_bProceed = true;
 }

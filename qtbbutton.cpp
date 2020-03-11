@@ -113,12 +113,26 @@ QPixmap QTBbutton::getIcon( const int number, const int bank ){
     }
     char _alias[BUTTON_NAME_MAX_SIZE+1];
     ::memset( _alias, 0, BUTTON_NAME_MAX_SIZE+1);
-    ::memcpy( _alias, SSXMSGS::g_BanksSettings.at(bank).buttonContext->nameAlias, BUTTON_NAME_MAX_SIZE);
+    ::memcpy( _alias, SSXMSGS::g_BanksSettings.at(bank).buttonContext[number-1].nameAlias, BUTTON_NAME_MAX_SIZE);
     QString _aliasName(_alias);
-    if (_aliasName.isEmpty()) _aliasName = "Alias Name";
-    _aliasName = QString("[%1]").arg(_aliasName);
-    Y+= delta;
-    painter.drawText( X, Y, _aliasName );
+    if (_aliasName.isEmpty()) {
+        _aliasName = "[Alias Name]";
+        //_aliasName = QString("[%1]").arg(_aliasName);
+        Y+= delta;
+        painter.drawText( X, Y, _aliasName );
+    }
+    else {
+        f.setBold(true);
+        f.setItalic(true);
+        painter.setFont(f);
+
+        Y+= delta;
+        painter.drawText( X, Y, _aliasName );
+
+        f.setBold(false);
+        f.setItalic(false);
+        painter.setFont(f);
+    }
 
     QString _ButtonType = buttonType.value( SSXMSGS::g_BanksSettings.at(bank).buttonType[number-1] );
     Y+= delta;

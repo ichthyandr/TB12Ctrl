@@ -8,6 +8,7 @@
 #include "qbuttonswidget.h"
 #include "qhomewidget.h"
 #include "qbtnsetupwidget.h"
+#include "qcmnsetupwidget.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -135,48 +136,28 @@ Dialog::Dialog(QWidget *parent):QDialog(parent){
     ///--------------------- models actions ----------------------
     connect( tb5Act,  &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_5_MKII;
-        //home->reset();
-        /*
-        QButtonsWidget::getInstance()->maskBtns();
-        QButtonsWidget::getInstance()->update(0);
-        */
         QHomeWidget::getInstance()->_loadNames();
+        QCmnSetupWidget::getInstance()->updateData(0);
     });
     connect( tb8Act,  &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_8_MKII;
-        //home->reset();
-        /*
-        QButtonsWidget::getInstance()->maskBtns();
-        QButtonsWidget::getInstance()->update(0);
-        */
         QHomeWidget::getInstance()->_loadNames();
+        QCmnSetupWidget::getInstance()->updateData(0);
     });
     connect( tb12Act, &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_12_MKII;
-        //home->reset();
-        /*
-        QButtonsWidget::getInstance()->maskBtns();
-        QButtonsWidget::getInstance()->update(0);
-        */
         QHomeWidget::getInstance()->_loadNames();
+        QCmnSetupWidget::getInstance()->updateData(0);
     });
     connect( tb6pAct, &QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_6P_MKII;
-        //home->reset();
-        /*
-        QButtonsWidget::getInstance()->maskBtns();
-        QButtonsWidget::getInstance()->update(0);
-        */
         QHomeWidget::getInstance()->_loadNames();
+        QCmnSetupWidget::getInstance()->updateData(0);
     });
     connect( tb11pAct,&QAction::triggered, [=](){
         SSXMSGS::g_Model = SSXMSGS::TB_11P_MKII;
-        //home->reset();
-        /*
-        QButtonsWidget::getInstance()->maskBtns();
-        QButtonsWidget::getInstance()->update(0);
-        */
         QHomeWidget::getInstance()->_loadNames();
+        QCmnSetupWidget::getInstance()->updateData(0);
     });
 }
 

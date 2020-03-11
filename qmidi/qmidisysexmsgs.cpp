@@ -350,6 +350,8 @@ BankSettings::BankSettings(){
         buttonContext[i].commonContext.contolAndNrpnChangeContext_.paramMsbOnValue      = 127;
 
         buttonContext[i].commonContext.contolAndNrpnChangeContext_.vendorBlockId        = VENDOR_BLOCK_ID_NONE;
+
+        ::memset(buttonContext[i].nameAlias, 0, BUTTON_NAME_MAX_SIZE);
     }
 }
 

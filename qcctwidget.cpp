@@ -32,11 +32,213 @@ QCctWidget::QCctWidget(QWidget *parent) : QWidget(parent){
     hMainLayout->addLayout( grid );
     hMainLayout->addStretch(1000);
 
-    auto gbCCT  = new QGroupBox(tr("Control Change Toggle"));
-    auto gbRS   = new QGroupBox(tr("Relay States"));
+    auto gbCCT      = new QGroupBox(tr("Control Change Toggle"));
+    auto gbRS       = new QGroupBox(tr("Relay States"));
+    auto gbVendor   = new QGroupBox(tr("AxeFxIII Effect"),this);
 
-    grid->addWidget( gbCCT, 0, 0, Qt::AlignLeft );
-    grid->addWidget( gbRS,  0, 1, Qt::AlignLeft );
+    grid->addWidget( gbCCT,     0, 0, Qt::AlignLeft );
+    grid->addWidget( gbRS,      0, 1, Qt::AlignLeft );
+    grid->addWidget( gbVendor,  0, 2, Qt::AlignLeft );
+
+    // Vendor
+    auto vbxVID  = new QVBoxLayout();
+    gbVendor->setLayout(vbxVID);
+
+    auto gridVID= new QGridLayout();
+    vbxVID->addLayout(gridVID);
+    vbxVID->addStretch(1000);
+
+    auto lblVID = new QLabel(tr("Effect ID"));
+    auto cbxVID = new QComboBox( this );
+
+    m_vbxVID = cbxVID;
+
+    cbxVID->addItem(tr("Control"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CONTROL));
+    cbxVID->addItem(tr("Tuner"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TUNER));
+    cbxVID->addItem(tr("IRCapture"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_IRCAPTURE));
+    cbxVID->addItem(tr("Input1"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_INPUT1));
+    cbxVID->addItem(tr("Input2"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_INPUT2));
+    cbxVID->addItem(tr("Input3"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_INPUT3));
+    cbxVID->addItem(tr("Input4"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_INPUT4));
+    cbxVID->addItem(tr("Input5"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_INPUT5));
+    cbxVID->addItem(tr("Output1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_OUTPUT1));
+    cbxVID->addItem(tr("Output2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_OUTPUT2));
+    cbxVID->addItem(tr("Output3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_OUTPUT3));
+    cbxVID->addItem(tr("Output4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_OUTPUT4));
+    cbxVID->addItem(tr("Comp1"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_COMP1));
+    cbxVID->addItem(tr("Comp2"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_COMP2));
+    cbxVID->addItem(tr("Comp3"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_COMP3));
+    cbxVID->addItem(tr("Comp4"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_COMP4));
+    cbxVID->addItem(tr("GraphEQ1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GRAPHEQ1));
+    cbxVID->addItem(tr("GraphEQ2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GRAPHEQ2));
+    cbxVID->addItem(tr("GraphEQ3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GRAPHEQ3));
+    cbxVID->addItem(tr("GraphEQ4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GRAPHEQ4));
+    cbxVID->addItem(tr("ParaEQ1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PARAEQ1));
+    cbxVID->addItem(tr("ParaEQ2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PARAEQ2));
+    cbxVID->addItem(tr("ParaEQ3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PARAEQ3));
+    cbxVID->addItem(tr("ParaEQ4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PARAEQ4));
+    cbxVID->addItem(tr("Distort1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DISTORT1));
+    cbxVID->addItem(tr("Distort2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DISTORT2));
+    cbxVID->addItem(tr("Distort3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DISTORT3));
+    cbxVID->addItem(tr("Distort4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DISTORT4));
+    cbxVID->addItem(tr("Cab1"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CAB1));
+    cbxVID->addItem(tr("Cab2"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CAB2));
+    cbxVID->addItem(tr("Cab3"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CAB3));
+    cbxVID->addItem(tr("Cab4"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CAB4));
+    cbxVID->addItem(tr("Reverb1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_REVERB1));
+    cbxVID->addItem(tr("Reverb2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_REVERB2));
+    cbxVID->addItem(tr("Reverb3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_REVERB3));
+    cbxVID->addItem(tr("Reverb4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_REVERB4));
+    cbxVID->addItem(tr("Delay1"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DELAY1));
+    cbxVID->addItem(tr("Delay2"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DELAY2));
+    cbxVID->addItem(tr("Delay3"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DELAY3));
+    cbxVID->addItem(tr("Delay4"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_DELAY4));
+    cbxVID->addItem(tr("MultiTAP1"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTITAP1));
+    cbxVID->addItem(tr("MultiTAP2"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTITAP2));
+    cbxVID->addItem(tr("MultiTAP3"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTITAP3));
+    cbxVID->addItem(tr("MultiTAP4"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTITAP4));
+    cbxVID->addItem(tr("Chorus1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CHORUS1));
+    cbxVID->addItem(tr("Chorus2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CHORUS2));
+    cbxVID->addItem(tr("Chorus3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CHORUS3));
+    cbxVID->addItem(tr("Chorus4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CHORUS4));
+    cbxVID->addItem(tr("Flanger1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FLANGER1));
+    cbxVID->addItem(tr("Flanger2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FLANGER2));
+    cbxVID->addItem(tr("Flanger3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FLANGER3));
+    cbxVID->addItem(tr("Flanger4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FLANGER4));
+    cbxVID->addItem(tr("Rotary1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ROTARY1));
+    cbxVID->addItem(tr("Rotary2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ROTARY2));
+    cbxVID->addItem(tr("Rotary3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ROTARY3));
+    cbxVID->addItem(tr("Rotary4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ROTARY4));
+    cbxVID->addItem(tr("Phaser1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PHASER1));
+    cbxVID->addItem(tr("Phaser2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PHASER2));
+    cbxVID->addItem(tr("Phaser3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PHASER3));
+    cbxVID->addItem(tr("Phaser4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PHASER4));
+    cbxVID->addItem(tr("Wah1"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_WAH1));
+    cbxVID->addItem(tr("Wah2"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_WAH2));
+    cbxVID->addItem(tr("Wah3"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_WAH3));
+    cbxVID->addItem(tr("Wah4"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_WAH4));
+    cbxVID->addItem(tr("Formant1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FORMANT1));
+    cbxVID->addItem(tr("Formant2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FORMANT2));
+    cbxVID->addItem(tr("Formant3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FORMANT3));
+    cbxVID->addItem(tr("Formant4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FORMANT4));
+    cbxVID->addItem(tr("Volume1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOLUME1));
+    cbxVID->addItem(tr("Volume2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOLUME2));
+    cbxVID->addItem(tr("Volume3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOLUME3));
+    cbxVID->addItem(tr("Volume4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOLUME4));
+    cbxVID->addItem(tr("Tremolo1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TREMOLO1));
+    cbxVID->addItem(tr("Tremolo2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TREMOLO2));
+    cbxVID->addItem(tr("Tremolo3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TREMOLO3));
+    cbxVID->addItem(tr("Tremolo4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TREMOLO4));
+    cbxVID->addItem(tr("Pitch1"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PITCH1));
+    cbxVID->addItem(tr("Pitch2"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PITCH2));
+    cbxVID->addItem(tr("Pitch3"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PITCH3));
+    cbxVID->addItem(tr("Pitch4"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PITCH4));
+    cbxVID->addItem(tr("Filter1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FILTER1));
+    cbxVID->addItem(tr("Filter2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FILTER2));
+    cbxVID->addItem(tr("Filter3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FILTER3));
+    cbxVID->addItem(tr("Filter4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FILTER4));
+    cbxVID->addItem(tr("Fuzz1"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FUZZ1));
+    cbxVID->addItem(tr("Fuzz2"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FUZZ2));
+    cbxVID->addItem(tr("Fuzz3"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FUZZ3));
+    cbxVID->addItem(tr("Fuzz4"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FUZZ4));
+    cbxVID->addItem(tr("Enhancer1"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ENHANCER1));
+    cbxVID->addItem(tr("Enhancer2"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ENHANCER2));
+    cbxVID->addItem(tr("Enhancer3"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ENHANCER3));
+    cbxVID->addItem(tr("Enhancer4"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_ENHANCER4));
+    cbxVID->addItem(tr("Mixer1"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MIXER1));
+    cbxVID->addItem(tr("Mixer2"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MIXER2));
+    cbxVID->addItem(tr("Mixer3"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MIXER3));
+    cbxVID->addItem(tr("Mixer4"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MIXER4));
+    cbxVID->addItem(tr("Synth1"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_SYNTH1));
+    cbxVID->addItem(tr("Synth2"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_SYNTH2));
+    cbxVID->addItem(tr("Synth3"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_SYNTH3));
+    cbxVID->addItem(tr("Synth4"),       QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_SYNTH4));
+    cbxVID->addItem(tr("Vocoder1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOCODER1));
+    cbxVID->addItem(tr("Vocoder2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOCODER2));
+    cbxVID->addItem(tr("Vocoder3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOCODER3));
+    cbxVID->addItem(tr("Vocoder4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_VOCODER4));
+    cbxVID->addItem(tr("Megatap1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MEGATAP1));
+    cbxVID->addItem(tr("Megatap2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MEGATAP2));
+    cbxVID->addItem(tr("Megatap3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MEGATAP3));
+    cbxVID->addItem(tr("Megatap4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MEGATAP4));
+    cbxVID->addItem(tr("Crossover1"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CROSSOVER1));
+    cbxVID->addItem(tr("Crossover2"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CROSSOVER2));
+    cbxVID->addItem(tr("Crossover3"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CROSSOVER3));
+    cbxVID->addItem(tr("Crossover4"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_CROSSOVER4));
+    cbxVID->addItem(tr("Gate1"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GATE1));
+    cbxVID->addItem(tr("Gate2"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GATE2));
+    cbxVID->addItem(tr("Gate3"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GATE3));
+    cbxVID->addItem(tr("Gate4"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_GATE4));
+    cbxVID->addItem(tr("Ringmod1"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RINGMOD1));
+    cbxVID->addItem(tr("Ringmod2"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RINGMOD2));
+    cbxVID->addItem(tr("Ringmod3"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RINGMOD3));
+    cbxVID->addItem(tr("Ringmod4"),     QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RINGMOD4));
+    cbxVID->addItem(tr("Multicomp1"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTICOMP1));
+    cbxVID->addItem(tr("Multicomp2"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTICOMP2));
+    cbxVID->addItem(tr("Multicomp3"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTICOMP3));
+    cbxVID->addItem(tr("Multicomp4"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTICOMP4));
+    cbxVID->addItem(tr("Tentap1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TENTAP1));
+    cbxVID->addItem(tr("Tentap2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TENTAP2));
+    cbxVID->addItem(tr("Tentap3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TENTAP3));
+    cbxVID->addItem(tr("Tentap4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TENTAP4));
+    cbxVID->addItem(tr("Resonator1"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RESONATOR1));
+    cbxVID->addItem(tr("Resonator2"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RESONATOR2));
+    cbxVID->addItem(tr("Resonator3"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RESONATOR3));
+    cbxVID->addItem(tr("Resonator4"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RESONATOR4));
+    cbxVID->addItem(tr("Looper1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_LOOPER1));
+    cbxVID->addItem(tr("Looper2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_LOOPER2));
+    cbxVID->addItem(tr("Looper3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_LOOPER3));
+    cbxVID->addItem(tr("Looper4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_LOOPER4));
+    cbxVID->addItem(tr("Tonematch1"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TONEMATCH1));
+    cbxVID->addItem(tr("Tonematch2"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TONEMATCH2));
+    cbxVID->addItem(tr("Tonematch3"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TONEMATCH3));
+    cbxVID->addItem(tr("Tonematch4"),   QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_TONEMATCH4));
+    cbxVID->addItem(tr("Rta1"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RTA1));
+    cbxVID->addItem(tr("Rta2"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RTA2));
+    cbxVID->addItem(tr("Rta3"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RTA3));
+    cbxVID->addItem(tr("Rta4"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_RTA4));
+    cbxVID->addItem(tr("Plex1"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PLEX1));
+    cbxVID->addItem(tr("Plex2"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PLEX2));
+    cbxVID->addItem(tr("Plex3"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PLEX3));
+    cbxVID->addItem(tr("Plex4"),        QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PLEX4));
+    cbxVID->addItem(tr("FBsend1"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBSEND1));
+    cbxVID->addItem(tr("FBsend2"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBSEND2));
+    cbxVID->addItem(tr("FBsend3"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBSEND3));
+    cbxVID->addItem(tr("FBsend4"),      QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBSEND4));
+    cbxVID->addItem(tr("FBreturn1"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBRETURN1));
+    cbxVID->addItem(tr("FBreturn2"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBRETURN2));
+    cbxVID->addItem(tr("FBreturn3"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBRETURN3));
+    cbxVID->addItem(tr("FBreturn4"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FBRETURN4));
+    cbxVID->addItem(tr("MIDIblock"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MIDIBLOCK));
+    cbxVID->addItem(tr("Multiplexer1"), QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTIPLEXER1));
+    cbxVID->addItem(tr("Multiplexer2"), QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTIPLEXER2));
+    cbxVID->addItem(tr("Multiplexer3"), QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTIPLEXER3));
+    cbxVID->addItem(tr("Multiplexer4"), QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_MULTIPLEXER4));
+    cbxVID->addItem(tr("IRplayer1"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_IRPLAYER1));
+    cbxVID->addItem(tr("IRplayer2"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_IRPLAYER2));
+    cbxVID->addItem(tr("IRplayer3"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_IRPLAYER3));
+    cbxVID->addItem(tr("IRplayer4"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_IRPLAYER4));
+    cbxVID->addItem(tr("FootController"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_FOOTCONTROLLER));
+    cbxVID->addItem(tr("Preset_FC"),    QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_PRESET_FC));
+    cbxVID->addItem(tr("None"),         QVariant(SSXMSGS::AxeFxIII_EFFECT_ID::ID_NONE));
+
+    gridVID->addWidget( lblVID,   0, 0, Qt::AlignRight);
+    gridVID->addWidget( cbxVID,   0, 1, Qt::AlignLeft);
+
+    connect(cbxVID, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index){
+        if ( m_bProceed ){
+            QVariant var = cbxVID->itemData(index);
+            bool ok;
+            int data = var.toInt(&ok);
+            if ( ok ){
+                uint8_t data8 = static_cast<uint8_t>(data);
+                SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].commonContext.contolAndNrpnChangeContext_.vendorBlockId = data8;
+                emit s_changed(m_curBnkNumber);
+            }
+            else
+                qCCritical(CMN) << Q_FUNC_INFO << "can't convert data for vendorBlockId";
+        }
+    });
 
     // Control Change Toggle
     auto vbxCCT  = new QVBoxLayout();
@@ -357,6 +559,10 @@ void QCctWidget::setButton(int btnNumber, int curBnkNumber){
         combo->setCurrentIndex(index);
         i+=2;
     }
+
+    uint8_t data = SSXMSGS::g_BanksSettings[m_curBnkNumber].buttonContext[m_btnNumber-1].commonContext.contolAndNrpnChangeContext_.vendorBlockId;
+    int index = m_vbxVID->findData(QVariant(data));
+    m_vbxVID->setCurrentIndex( index );
 
     ////// end of init /////
     m_bProceed=true;

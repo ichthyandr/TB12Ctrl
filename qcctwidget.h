@@ -40,6 +40,8 @@ private:
     QVector<QCheckBox*>     m_checkBoxes;
     /// вектор комбо для реле
     QVector<QComboBox*>     m_relCombos;
+
+    QComboBox *             m_vbxVID{Q_NULLPTR};
     /// обработчик комбо реле
     void relays( int index, int shift, QComboBox * combo = Q_NULLPTR );
 signals:
